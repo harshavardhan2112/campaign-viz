@@ -1,16 +1,13 @@
 import streamlit as st
 import pandas as pd
 import plotly.express as px
-import seaborn as sns
 import matplotlib.pyplot as plt
 from wordcloud import WordCloud
-import numpy as np
 
 # Configure page
 st.set_page_config(page_title="Campaign Finance Dashboard", layout="wide")
 st.title("Campaign Finance Visualization Dashboard")
 
-# Cache data loading for performance
 @st.cache_data
 def load_candidate_summary(path):
     cols = [
@@ -29,18 +26,6 @@ def load_candidate_summary(path):
     return df
 
 @st.cache_data
-def load_individual(path):
-    cols = [
-        'CMTE_ID','AMNDT_IND','RPT_TP','TRANSACTION_PGI','IMAGE_NUM',
-        'TRANSACTION_TP','ENTITY_TP','NAME','CITY','STATE','ZIP_CODE',
-        'EMPLOYER','OCCUPATION','TRANSACTION_DT','TRANSACTION_AMT',
-        'OTHER_ID','TRAN_ID','FILE_NUM','MEMO_CD','MEMO_TEXT','SUB_ID'
-    ]
-    df = pd.read_csv(path, delimiter='|', header=None, names=cols, low_memory=True)
-    df = df[df['STATE'].notna()]
-    return df
-
-@st.cache_data
 def load_committee(path):
     cols = [
         'CMTE_ID','CMTE_NM','TRES_NM','CMTE_ST1','CMTE_ST2',
@@ -51,11 +36,11 @@ def load_committee(path):
     df = pd.read_csv(path, delimiter='|', header=None, names=cols, low_memory=True)
     return df
 
-# Load data (update paths if needed)
+# Load data
 cand_df = load_candidate_summary("weball24.txt")
 old_df = load_candidate_summary("weball20.txt").rename(columns={"TTL_INDIV_CONTRIB":"DON_OLD"})
 new_df = load_candidate_summary("weball22.txt").rename(columns={"TTL_INDIV_CONTRIB":"DON_NEW"})
-indiv_df = load_individual("itcont_2025_2026.txt")\comm_df = load_committee("cm.txt")
+comm_df = load_committee("cm.txt")
 
 # Sidebar selection
 section = st.sidebar.selectbox("Choose Visualization Section", [
@@ -63,18 +48,16 @@ section = st.sidebar.selectbox("Choose Visualization Section", [
     "Change in Donations Choropleth",
     "Top 10 Disbursement Gap",
     "Sunburst Fundraising Hierarchy",
-    "Occupation Contributions",
-    "Monthly Fundraising Trends",
-    "Party vs Spending Source Heatmap",
     "Treemap of Fundraising by Party",
     "Financial Health Score",
-    "Common Committee Name Themes"
+    "Common Themes in Committee Names"
 ])
 
 if section == "State-Level Choropleth":
     st.header("State-Level Spending Choropleth")
-    # prepare state totals
-    df = cand_df.groupby("CAND_OFFICE_ST").agg({"TTL_DISB":"sum","TTL_RECEIPTS":"sum","COH_BOP":"sum","COH_COP":"sum"}).reset_index()
+    df = cand_df.groupby("CAND_OFFICE_ST").agg(
+        {"TTL_DISB":"sum","TTL_RECEIPTS":"sum","COH_BOP":"sum","COH_COP":"sum"}
+    ).reset_index()
     df['NET_COH'] = df['COH_COP'] - df['COH_BOP']
     metric = st.selectbox("Select Metric", ["TTL_DISB","TTL_RECEIPTS","NET_COH"])
     fig = px.choropleth(
@@ -99,62 +82,25 @@ elif section == "Change in Donations Choropleth":
 
 elif section == "Top 10 Disbursement Gap":
     st.header("Top 10 States by Disbursement Gap (DEM vs REP)")
-    df1 = cand_df[['CAND_PTY_AFFILIATION','CAND_OFFICE_ST','TTL_DISB']].copy()
+    df1 = cand_df[["CAND_PTY_AFFILIATION","CAND_OFFICE_ST","TTL_DISB"]].copy()
     df1 = df1[df1['CAND_PTY_AFFILIATION'].isin(['DEM','REP'])]
     agg = df1.groupby(['CAND_OFFICE_ST','CAND_PTY_AFFILIATION'], as_index=False).sum()
     pivot = agg.pivot(index='CAND_OFFICE_ST', columns='CAND_PTY_AFFILIATION', values='TTL_DISB').fillna(0)
     pivot['GAP'] = (pivot['DEM'] - pivot['REP']).abs()
     top10 = pivot.nlargest(10,'GAP').reset_index()
     long = top10.melt(id_vars='CAND_OFFICE_ST', value_vars=['DEM','REP'], var_name='Party', value_name='Disbursements')
-    fig = px.line(long, x='Party', y='Disbursements', color='CAND_OFFICE_ST', markers=True, title="Disbursement Gap")
+    fig = px.line(long, x='Party', y='Disbursements', color='CAND_OFFICE_ST', markers=True, title='Disbursement Gap')
     st.plotly_chart(fig, use_container_width=True)
 
 elif section == "Sunburst Fundraising Hierarchy":
     st.header("Fundraising Hierarchy: Party → Candidate → State")
-    sun = cand_df[['CAND_PTY_AFFILIATION','CAND_NAME','CAND_OFFICE_ST','TTL_RECEIPTS']]
+    sun = cand_df[["CAND_PTY_AFFILIATION","CAND_NAME","CAND_OFFICE_ST","TTL_RECEIPTS"]]
     sun = sun[sun['TTL_RECEIPTS']>0]
     mapping = {'DEM':'Dem','REP':'Rep'}
     sun['Party'] = sun['CAND_PTY_AFFILIATION'].map(mapping).fillna('Other')
     sun = sun.rename(columns={'CAND_NAME':'Candidate','CAND_OFFICE_ST':'State','TTL_RECEIPTS':'Amount'})
     fig = px.sunburst(sun, path=['Party','Candidate','State'], values='Amount', title='Fundraising Hierarchy')
     st.plotly_chart(fig, use_container_width=True)
-
-elif section == "Occupation Contributions":
-    st.header("Top 10 Occupations by Contributions (DEM vs REP)")
-    indiv = indiv_df.merge(comm_df[['CMTE_ID','CMTE_PTY_AFFILIATION']], on='CMTE_ID', how='left')
-    df = indiv[indiv['CMTE_PTY_AFFILIATION'].isin(['DEM','REP'])]
-    agg = df.groupby(['OCCUPATION','CMTE_PTY_AFFILIATION'])['TRANSACTION_AMT'].sum().unstack(fill_value=0)
-    top = agg.sum(axis=1).nlargest(10).index
-    top_df = agg.loc[top]
-    fig, ax = plt.subplots(figsize=(10,6))
-    top_df.plot(kind='bar', ax=ax)
-    ax.set_ylabel('Total Amount')
-    ax.set_title('Contributions by Occupation and Party')
-    st.pyplot(fig)
-
-elif section == "Monthly Fundraising Trends":
-    st.header("Monthly Fundraising Trends: DEM vs REP")
-    df = indiv_df.merge(comm_df[['CMTE_ID','CMTE_PTY_AFFILIATION']], on='CMTE_ID', how='left')
-    df['TRANSACTION_DT'] = pd.to_datetime(df['TRANSACTION_DT'], format='%m%d%Y', errors='coerce')
-    df = df.dropna(subset=['TRANSACTION_DT'])
-    df['MonthYear'] = df['TRANSACTION_DT'].dt.to_period('M').astype(str)
-    pivot = df[df['CMTE_PTY_AFFILIATION'].isin(['DEM','REP'])] 
-    cool = pivot.groupby(['MonthYear','CMTE_PTY_AFFILIATION'])['TRANSACTION_AMT'].sum().unstack(fill_value=0)
-    fig, ax = plt.subplots(figsize=(12,5))
-    cool.plot(ax=ax)
-    ax.set_title('Monthly Fundraising Trends')
-    st.pyplot(fig)
-
-elif section == "Party vs Spending Source Heatmap":
-    st.header("Party vs Spending Source")
-    df = indiv_df.merge(comm_df[['CMTE_ID','CMTE_PTY_AFFILIATION']], on='CMTE_ID', how='left')
-    df['Source'] = df['ENTITY_TP'].map({'IND':'Individual','PAC':'PAC','PTY':'Party','CAN':'Candidate'})
-    df = df.dropna(subset=['Source'])
-    agg = df.groupby(['CMTE_PTY_AFFILIATION','Source'])['TRANSACTION_AMT'].sum().unstack(fill_value=0)
-    fig, ax = plt.subplots(figsize=(8,6))
-    sns.heatmap(agg, annot=True, fmt='.0f', ax=ax)
-    ax.set_title('Party vs Spending Source')
-    st.pyplot(fig)
 
 elif section == "Treemap of Fundraising by Party":
     st.header("Treemap: Party → Candidate Fundraising")
@@ -167,7 +113,7 @@ elif section == "Financial Health Score":
     st.header("Top 20 Candidates by Financial Health")
     df = cand_df.dropna(subset=['TTL_RECEIPTS','TTL_DISB','COH_COP'])
     df = df[(df['TTL_RECEIPTS']>0)&(df['TTL_DISB']>0)&(df['COH_COP']>0)]
-    df['Health'] = df['TTL_RECEIPTS']+df['COH_COP']-df['TTL_DISB']
+    df['Health'] = df['TTL_RECEIPTS'] + df['COH_COP'] - df['TTL_DISB']
     top = df.nlargest(20,'Health')[['CAND_NAME','Health']].set_index('CAND_NAME')
     fig, ax = plt.subplots(figsize=(10,8))
     top['Health'].plot(kind='barh', ax=ax)
