@@ -61,10 +61,7 @@ master = load_candidate_master('cn.txt')
 # --- Topo for Altair maps ---
 us_states = alt.topo_feature(data.us_10m.url, 'states')
 
-# --- 0. House Race Competitiveness by State ---
-st.header('0. House Race Competitiveness by State (Number of Candidates)')
-house = master[master['CAND_OFFICE']=='H']
-state_comp = house.groupby('CAND_OFFICE_ST').size().reset_index(name='num_candidates')
+# State to FIPS mapping
 state_to_fips = {
     'AL':1,'AK':2,'AZ':4,'AR':5,'CA':6,'CO':8,'CT':9,'DE':10,'DC':11,
     'FL':12,'GA':13,'HI':15,'ID':16,'IL':17,'IN':18,'IA':19,'KS':20,
@@ -74,13 +71,24 @@ state_to_fips = {
     'SD':46,'TN':47,'TX':48,'UT':49,'VT':50,'VA':51,'WA':53,'WV':54,
     'WI':55,'WY':56
 }
+
+# --- 1. House Race Competitiveness by State ---
+st.header('1. House Race Competitiveness by State (Number of Candidates)')
+house = master[master['CAND_OFFICE']=='H']
+state_comp = house.groupby('CAND_OFFICE_ST').size().reset_index(name='num_candidates')
+# Add district counts and most competitive district if you have data
 state_comp['id'] = state_comp['CAND_OFFICE_ST'].map(state_to_fips)
-chor_house = alt.Chart(us_states).mark_geoshape(stroke='white',strokeWidth=0.5).encode(
-    color=alt.Color('num_candidates:Q',title='House Candidates',scale=alt.Scale(scheme='blues')),
-    tooltip=[alt.Tooltip('num_candidates:Q',title='House Candidates')]
+chor_house = alt.Chart(us_states).mark_geoshape(
+    stroke='white', strokeWidth=0.5
+).encode(
+    color=alt.Color('num_candidates:Q', title='House Candidates', scale=alt.Scale(scheme='viridis')),
+    tooltip=[
+        alt.Tooltip('num_candidates:Q', title='House Candidates')
+    ]
 ).transform_lookup(
-    lookup='id',from_=alt.LookupData(state_comp,'id',['num_candidates'])
-).project('albersUsa').properties(width=800,height=400)
+    lookup='id',
+    from_=alt.LookupData(state_comp, 'id', ['num_candidates'])
+).project('albersUsa').properties(width=800, height=400)
 st.altair_chart(chor_house, use_container_width=True)
 
 # --- 1. Senate Race Competitiveness by State ---
