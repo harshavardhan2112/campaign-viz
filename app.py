@@ -236,8 +236,8 @@ plt.xticks(rotation=45)
 plt.grid(True)
 st.pyplot(plt.gcf())
 
-# --- 2. Choropleth: Change in Individual Donations by State ---
-st.header("7. Choropleth: Change in Individual Donations by State")
+# --- 5. Choropleth: Change in Individual Donations by State ---
+st.header("5. Choropleth: Change in Individual Donations by State")
 old_tot = cand_old.groupby("CAND_OFFICE_ST")["DON_OLD"].sum().reset_index()
 new_tot = cand_new.groupby("CAND_OFFICE_ST")["DON_NEW"].sum().reset_index()
 change_df = old_tot.merge(new_tot, on="CAND_OFFICE_ST", how="outer").fillna(0)
@@ -248,16 +248,18 @@ fig2 = px.choropleth(
     locations='CAND_OFFICE_ST',
     locationmode='USA-states',
     color='CHANGE',
-    color_continuous_scale=px.colors.diverging.RdYlGn,
+    color_continuous_scale='RdBu',
     range_color=[-M, M],
     color_continuous_midpoint=0,
     scope='usa',
-    title='Δ Individual Donations by State'
+    title='Δ Individual Donations by State',
+    width=800,
+    height=500
 )
 st.plotly_chart(fig2, use_container_width=True)
 
-# --- 3. Choropleth: Net Cash On Hand by State ---
-st.header("8. Choropleth: Net Cash On Hand by State")
+# --- 6. Choropleth: Net Cash On Hand by State ---
+st.header("6. Choropleth: Net Cash On Hand by State")
 coh_df = cand_current.groupby('CAND_OFFICE_ST').agg({'COH_BOP':'sum','COH_COP':'sum'}).reset_index()
 coh_df['NET_COH'] = coh_df['COH_COP'] - coh_df['COH_BOP']
 fig3 = px.choropleth(
@@ -265,24 +267,28 @@ fig3 = px.choropleth(
     locations='CAND_OFFICE_ST',
     locationmode='USA-states',
     color='NET_COH',
-    color_continuous_scale='Inferno',
+    color_continuous_scale='Greens',
     scope='usa',
     labels={'NET_COH':'Net Cash On Hand'},
-    title='Net Cash On Hand by State'
+    title='Net Cash On Hand by State',
+    width=800,
+    height=500
 )
 st.plotly_chart(fig3, use_container_width=True)
 
 # --- 4. Choropleth: Total Disbursements by State ---
-st.header("9. Choropleth: Total Receipts by State")
-disburse_df = cand_current.groupby('CAND_OFFICE_ST')['TTL_RECEIPTS'].sum().reset_index()
+st.header("4. Choropleth: Total Disbursements by State")
+disburse_df = cand_current.groupby('CAND_OFFICE_ST')['TTL_DISB'].sum().reset_index()
 fig4 = px.choropleth(
     disburse_df,
     locations='CAND_OFFICE_ST',
     locationmode='USA-states',
-    color='TTL_RECEIPTS',
-    color_continuous_scale='Viridis',
+    color='TTL_DISB',
+    color_continuous_scale='Blues',
     scope='usa',
-    labels={'TTL_DISB':'Total Receipts'},
-    title='Total Receipts by State'
+    labels={'TTL_DISB':'Total Disbursements'},
+    title='Total Disbursements by State',
+    width=800,
+    height=400
 )
 st.plotly_chart(fig4, use_container_width=True)
