@@ -261,8 +261,7 @@ chor_change = alt.Chart(us_states).mark_geoshape(
 ).project('albersUsa').properties(width=800, height=400)
 st.altair_chart(chor_change, use_container_width=True)
 
-# --- 6. Choropleth: Net Cash On Hand by State ---
-st.header("6. Choropleth: Net Cash On Hand by State")
+st.header("3. Choropleth: Net Cash On Hand by State")
 coh_df = cand_current.groupby('CAND_OFFICE_ST').agg({'COH_BOP':'sum','COH_COP':'sum'}).reset_index()
 coh_df['NET_COH'] = coh_df['COH_COP'] - coh_df['COH_BOP']
 # Map to FIPS for Altair
@@ -270,26 +269,39 @@ coh_df['id'] = coh_df['CAND_OFFICE_ST'].map(state_to_fips)
 chor_coh = alt.Chart(us_states).mark_geoshape(
     stroke='white', strokeWidth=0.5
 ).encode(
-    color=alt.Color('NET_COH:Q', title='Net Cash On Hand', scale=alt.Scale(scheme='Inferno')),
+    color=alt.Color(
+        'NET_COH:Q', title='Net Cash On Hand',
+        scale=alt.Scale(
+            domain=[coh_df['NET_COH'].min(), coh_df['NET_COH'].max()],
+            range=px.colors.sequential.Inferno
+        )
+    ),
     tooltip=[alt.Tooltip('NET_COH:Q', title='Net Cash On Hand')]
 ).transform_lookup(
     lookup='id',
     from_=alt.LookupData(coh_df, 'id', ['NET_COH'])
 ).project('albersUsa').properties(width=800, height=400)
-st.altair_chart(chor_coh, use_container_width=True)
+st.altair_chart(chor_coh, use_container_width=True)(fig3, use_container_width=True)
+
 
 # --- 7. Choropleth: Total Disbursements by State ---
-st.header("7. Choropleth: Total Disbursements by State")
-disburse_df = cand_current.groupby('CAND_OFFICE_ST')['TTL_DISB'].sum().reset_index()
+st.header("7. Choropleth: Total Receipts by State")
+receipts_df = cand_current.groupby('CAND_OFFICE_ST')['TTL_RECEIPTS'].sum().reset_index()
 # Map to FIPS for Altair
-disburse_df['id'] = disburse_df['CAND_OFFICE_ST'].map(state_to_fips)
-chor_disb = alt.Chart(us_states).mark_geoshape(
+receipts_df['id'] = receipts_df['CAND_OFFICE_ST'].map(state_to_fips)
+chor_receipts = alt.Chart(us_states).mark_geoshape(
     stroke='white', strokeWidth=0.5
 ).encode(
-    color=alt.Color('TTL_DISB:Q', title='Total Disbursements', scale=alt.Scale(scheme='blues')),
-    tooltip=[alt.Tooltip('TTL_DISB:Q', title='Total Disbursements')]
+    color=alt.Color(
+        'TTL_RECEIPTS:Q', title='Total Receipts',
+        scale=alt.Scale(
+            domain=[receipts_df['TTL_RECEIPTS'].min(), receipts_df['TTL_RECEIPTS'].max()],
+            range=px.colors.sequential.Viridis
+        )
+    ),
+    tooltip=[alt.Tooltip('TTL_RECEIPTS:Q', title='Total Receipts')]
 ).transform_lookup(
     lookup='id',
-    from_=alt.LookupData(disburse_df, 'id', ['TTL_DISB'])
+    from_=alt.LookupData(receipts_df, 'id', ['TTL_RECEIPTS'])
 ).project('albersUsa').properties(width=800, height=400)
-st.altair_chart(chor_disb, use_container_width=True)
+st.altair_chart(chor_receipts, use_container_width=True)
