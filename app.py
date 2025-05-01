@@ -244,16 +244,26 @@ change_df = old_tot.merge(new_tot, on="CAND_OFFICE_ST", how="outer").fillna(0)
 change_df['CHANGE'] = change_df['DON_NEW'] - change_df['DON_OLD']
 # Map to FIPS for Altair
 change_df['id'] = change_df['CAND_OFFICE_ST'].map(state_to_fips)
+# after change_df is computed and you’ve added the FIPS ‘id’ column…
 chor_change = alt.Chart(us_states).mark_geoshape(
     stroke='white', strokeWidth=0.5
 ).encode(
-    color=alt.Color('CHANGE:Q', title='Δ Individual Donations', scale=alt.Scale(scheme='redblue')),
+    color=alt.Color(
+        'CHANGE:Q',
+        title='Δ Individual Donations',
+        scale=alt.Scale(
+            domain=[change_df['CHANGE'].min(), change_df['CHANGE'].max()],
+            range=px.colors.diverging.RdYlGn  # <— use this exact list
+        )
+    ),
     tooltip=[alt.Tooltip('CHANGE:Q', title='Δ Donations')]
 ).transform_lookup(
     lookup='id',
     from_=alt.LookupData(change_df, 'id', ['CHANGE'])
 ).project('albersUsa').properties(width=800, height=400)
+
 st.altair_chart(chor_change, use_container_width=True)
+
 
 # --- 6. Choropleth: Net Cash On Hand by State ---
 st.header("6. Choropleth: Net Cash On Hand by State")
@@ -264,7 +274,7 @@ coh_df['id'] = coh_df['CAND_OFFICE_ST'].map(state_to_fips)
 chor_coh = alt.Chart(us_states).mark_geoshape(
     stroke='white', strokeWidth=0.5
 ).encode(
-    color=alt.Color('NET_COH:Q', title='Net Cash On Hand', scale=alt.Scale(scheme='greens')),
+    color=alt.Color('NET_COH:Q', title='Net Cash On Hand', scale=alt.Scale(scheme='Inferno')),
     tooltip=[alt.Tooltip('NET_COH:Q', title='Net Cash On Hand')]
 ).transform_lookup(
     lookup='id',
