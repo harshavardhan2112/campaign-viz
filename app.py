@@ -281,7 +281,7 @@ chor_coh = alt.Chart(us_states).mark_geoshape(
     lookup='id',
     from_=alt.LookupData(coh_df, 'id', ['NET_COH'])
 ).project('albersUsa').properties(width=800, height=400)
-st.altair_chart(chor_coh, use_container_width=True)(fig3, use_container_width=True)
+st.altair_chart(chor_coh, use_container_width=True)
 
 
 # --- 7. Choropleth: Total Disbursements by State ---
