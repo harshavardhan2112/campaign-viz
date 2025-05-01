@@ -58,54 +58,9 @@ party_map = {'DEM':'Democratic', 'REP':'Republican'}
 comm_df = load_committee('cm.txt')
 master = load_candidate_master('cn.txt')
 
-# --- Topo for Altair maps ---
-us_states = alt.topo_feature(data.us_10m.url, 'states')
-
-# State to FIPS mapping
-state_to_fips = {
-    'AL':1,'AK':2,'AZ':4,'AR':5,'CA':6,'CO':8,'CT':9,'DE':10,'DC':11,
-    'FL':12,'GA':13,'HI':15,'ID':16,'IL':17,'IN':18,'IA':19,'KS':20,
-    'KY':21,'LA':22,'ME':23,'MD':24,'MA':25,'MI':26,'MN':27,'MS':28,
-    'MO':29,'MT':30,'NE':31,'NV':32,'NH':33,'NJ':34,'NM':35,'NY':36,
-    'NC':37,'ND':38,'OH':39,'OK':40,'OR':41,'PA':42,'RI':44,'SC':45,
-    'SD':46,'TN':47,'TX':48,'UT':49,'VT':50,'VA':51,'WA':53,'WV':54,
-    'WI':55,'WY':56
-}
-
-# --- 1. House Race Competitiveness by State ---
-st.header('1. House Race Competitiveness by State (Number of Candidates)')
-house = master[master['CAND_OFFICE']=='H']
-state_comp = house.groupby('CAND_OFFICE_ST').size().reset_index(name='num_candidates')
-# Add district counts and most competitive district if you have data
-state_comp['id'] = state_comp['CAND_OFFICE_ST'].map(state_to_fips)
-chor_house = alt.Chart(us_states).mark_geoshape(
-    stroke='white', strokeWidth=0.5
-).encode(
-    color=alt.Color('num_candidates:Q', title='House Candidates', scale=alt.Scale(scheme='viridis')),
-    tooltip=[
-        alt.Tooltip('num_candidates:Q', title='House Candidates')
-    ]
-).transform_lookup(
-    lookup='id',
-    from_=alt.LookupData(state_comp, 'id', ['num_candidates'])
-).project('albersUsa').properties(width=800, height=400)
-st.altair_chart(chor_house, use_container_width=True)
-
-# --- 1. Senate Race Competitiveness by State ---
-st.header('1. Senate Race Competitiveness by State (Number of Candidates)')
-senate = master[master['CAND_OFFICE']=='S']
-sen_comp = senate.groupby('CAND_OFFICE_ST').size().reset_index(name='num_candidates')
-sen_comp['id'] = sen_comp['CAND_OFFICE_ST'].map(state_to_fips)
-chor_senate = alt.Chart(us_states).mark_geoshape(stroke='white',strokeWidth=0.5).encode(
-    color=alt.Color('num_candidates:Q',title='Senate Candidates',scale=alt.Scale(scheme='viridis')),
-    tooltip=[alt.Tooltip('num_candidates:Q',title='Senate Candidates')]
-).transform_lookup(
-    lookup='id',from_=alt.LookupData(sen_comp,'id',['num_candidates'])
-).project('albersUsa').properties(width=800,height=400)
-st.altair_chart(chor_senate, use_container_width=True)
 
 # --- 2. Top 10 PACs by Total Receipts (2022) ---
-st.header('2. Top 10 PACs by Total Receipts (2022)')
+st.header('1. Top 10 PACs by Total Receipts (2022)')
 pac_cols=[
     "CMTE_ID","CMTE_NM","CMTE_TP","CMTE_DSGN","CMTE_FILING_FREQ",
     "TTL_RECEIPTS","TRANS_FROM_AFF","INDV_CONTRIB","OTHER_POL_CMTE_CONTRIB",
@@ -141,8 +96,56 @@ bars = alt.Chart(t10).mark_bar(stroke='black',strokeWidth=1.5).encode(
 ).properties(width=700,height=400)
 st.altair_chart(bars,use_container_width=True)
 
+
+# --- Topo for Altair maps ---
+us_states = alt.topo_feature(data.us_10m.url, 'states')
+
+# State to FIPS mapping
+state_to_fips = {
+    'AL':1,'AK':2,'AZ':4,'AR':5,'CA':6,'CO':8,'CT':9,'DE':10,'DC':11,
+    'FL':12,'GA':13,'HI':15,'ID':16,'IL':17,'IN':18,'IA':19,'KS':20,
+    'KY':21,'LA':22,'ME':23,'MD':24,'MA':25,'MI':26,'MN':27,'MS':28,
+    'MO':29,'MT':30,'NE':31,'NV':32,'NH':33,'NJ':34,'NM':35,'NY':36,
+    'NC':37,'ND':38,'OH':39,'OK':40,'OR':41,'PA':42,'RI':44,'SC':45,
+    'SD':46,'TN':47,'TX':48,'UT':49,'VT':50,'VA':51,'WA':53,'WV':54,
+    'WI':55,'WY':56
+}
+
+# --- 1. House Race Competitiveness by State ---
+st.header('2. House Race Competitiveness by State (Number of Candidates)')
+house = master[master['CAND_OFFICE']=='H']
+state_comp = house.groupby('CAND_OFFICE_ST').size().reset_index(name='num_candidates')
+# Add district counts and most competitive district if you have data
+state_comp['id'] = state_comp['CAND_OFFICE_ST'].map(state_to_fips)
+chor_house = alt.Chart(us_states).mark_geoshape(
+    stroke='white', strokeWidth=0.5
+).encode(
+    color=alt.Color('num_candidates:Q', title='House Candidates', scale=alt.Scale(scheme='viridis')),
+    tooltip=[
+        alt.Tooltip('num_candidates:Q', title='House Candidates')
+    ]
+).transform_lookup(
+    lookup='id',
+    from_=alt.LookupData(state_comp, 'id', ['num_candidates'])
+).project('albersUsa').properties(width=800, height=400)
+st.altair_chart(chor_house, use_container_width=True)
+
+# --- 1. Senate Race Competitiveness by State ---
+st.header('3. Senate Race Competitiveness by State (Number of Candidates)')
+senate = master[master['CAND_OFFICE']=='S']
+sen_comp = senate.groupby('CAND_OFFICE_ST').size().reset_index(name='num_candidates')
+sen_comp['id'] = sen_comp['CAND_OFFICE_ST'].map(state_to_fips)
+chor_senate = alt.Chart(us_states).mark_geoshape(stroke='white',strokeWidth=0.5).encode(
+    color=alt.Color('num_candidates:Q',title='Senate Candidates',scale=alt.Scale(scheme='viridis')),
+    tooltip=[alt.Tooltip('num_candidates:Q',title='Senate Candidates')]
+).transform_lookup(
+    lookup='id',from_=alt.LookupData(sen_comp,'id',['num_candidates'])
+).project('albersUsa').properties(width=800,height=400)
+st.altair_chart(chor_senate, use_container_width=True)
+
+
 # --- 3. Treemap: Party → Candidate Fundraising ---
-st.header('3. Treemap: Party → Candidate Fundraising')
+st.header('4. Treemap: Party → Candidate Fundraising')
 df1 = cand_current[cand_current['TTL_RECEIPTS'] > 0].copy()
 df1['Party'] = df1['CAND_PTY_AFFILIATION'].map(party_map).fillna('Other')
 fig1 = px.treemap(
@@ -157,7 +160,7 @@ st.plotly_chart(fig1, use_container_width=True)
 
 
 # --- 4. Radar Chart: Party Receipts by Top States ---
-st.header("4. Radar Chart: Party Receipts by Top States")
+st.header("5. Radar Chart: Party Receipts by Top States")
 party_state = cand_current.groupby(['CAND_OFFICE_ST', 'CAND_PTY_AFFILIATION'])['TTL_RECEIPTS'].sum().reset_index()
 party_state = party_state[party_state['CAND_PTY_AFFILIATION'].isin(['DEM', 'REP'])]
 pivot_rs = party_state.pivot(
@@ -196,10 +199,24 @@ fig2.update_layout(
 )
 st.plotly_chart(fig2, use_container_width=True)
 
-# --- 5. Violin Plot: Distribution of Fundraising Amounts by Party (Log Scale) ---
-st.header("5. Violin Plot: Distribution of Fundraising Amounts by Party (Log Scale)")
-candidate22_df = cand_new.copy()
-violin_df = candidate22_df[['CAND_PTY_AFFILIATION', 'TTL_RECEIPTS']]
+# Party mapping for violin
+party_map = {
+    'DEM': 'Democratic',
+    'DFL': 'Democratic',
+    'GOP': 'Republican',
+    'REP': 'Republican',
+    'LIB': 'Libertarian',
+    'GRE': 'Green',
+    'IND': 'Independent',
+    'CON': 'Constitution',
+    'NPA': 'No Party Affiliation',
+    'OTH': 'Other',
+    'UUP': 'United Utah Party'
+}
+
+# --- 1. Violin Plot: Distribution of Fundraising Amounts by Party (Log Scale) --- Distribution of Fundraising Amounts by Party (Log Scale) ---
+st.header("6. Violin Plot: Distribution of Fundraising Amounts by Party (Log Scale)")
+violin_df = cand_current[['CAND_PTY_AFFILIATION','TTL_RECEIPTS']].copy()
 violin_df = violin_df[violin_df['TTL_RECEIPTS'] > 0]
 violin_df['Party'] = violin_df['CAND_PTY_AFFILIATION'].map(party_map).fillna('Other')
 violin_df['Log_Receipts'] = np.log1p(violin_df['TTL_RECEIPTS'])
@@ -217,50 +234,53 @@ plt.xticks(rotation=45)
 plt.grid(True)
 st.pyplot(plt.gcf())
 
-# --- 6. Choropleth: Change in Individual Donations by State ---
-st.header("6. Choropleth: Change in Individual Donations by State")
+# --- 2. Choropleth: Change in Individual Donations by State ---
+st.header("7. Choropleth: Change in Individual Donations by State")
 old_tot = cand_old.groupby("CAND_OFFICE_ST")["DON_OLD"].sum().reset_index()
 new_tot = cand_new.groupby("CAND_OFFICE_ST")["DON_NEW"].sum().reset_index()
 change_df = old_tot.merge(new_tot, on="CAND_OFFICE_ST", how="outer").fillna(0)
 change_df['CHANGE'] = change_df['DON_NEW'] - change_df['DON_OLD']
 M = max(abs(change_df['CHANGE'].min()), change_df['CHANGE'].max())
-fig4 = px.choropleth(
+fig2 = px.choropleth(
     change_df,
     locations='CAND_OFFICE_ST',
     locationmode='USA-states',
     color='CHANGE',
+    color_continuous_scale='RdBu',
     range_color=[-M, M],
     color_continuous_midpoint=0,
     scope='usa',
     title='Δ Individual Donations by State'
 )
-st.plotly_chart(fig4, use_container_width=True)
+st.plotly_chart(fig2, use_container_width=True)
 
-# --- 7. Choropleth: Net Cash On Hand by State ---
-st.header("7. Choropleth: Net Cash On Hand by State")
-coh_df = cand_current.groupby("CAND_OFFICE_ST").agg({"COH_BOP": "sum", "COH_COP": "sum"}).reset_index()
+# --- 3. Choropleth: Net Cash On Hand by State ---
+st.header("8. Choropleth: Net Cash On Hand by State")
+coh_df = cand_current.groupby('CAND_OFFICE_ST').agg({'COH_BOP':'sum','COH_COP':'sum'}).reset_index()
 coh_df['NET_COH'] = coh_df['COH_COP'] - coh_df['COH_BOP']
-fig5 = px.choropleth(
+fig3 = px.choropleth(
     coh_df,
     locations='CAND_OFFICE_ST',
     locationmode='USA-states',
     color='NET_COH',
-    labels={'NET_COH': 'Net Cash On Hand'},
+    color_continuous_scale='Greens',
     scope='usa',
+    labels={'NET_COH':'Net Cash On Hand'},
     title='Net Cash On Hand by State'
 )
-st.plotly_chart(fig5, use_container_width=True)
+st.plotly_chart(fig3, use_container_width=True)
 
-# --- 8. Choropleth: Total Disbursements by State ---
-st.header("8. Choropleth: Total Disbursements by State")
-disburse_df = cand_current.groupby("CAND_OFFICE_ST")["TTL_DISB"].sum().reset_index()
-fig6 = px.choropleth(
+# --- 4. Choropleth: Total Disbursements by State ---
+st.header("9. Choropleth: Total Disbursements by State")
+disburse_df = cand_current.groupby('CAND_OFFICE_ST')['TTL_DISB'].sum().reset_index()
+fig4 = px.choropleth(
     disburse_df,
     locations='CAND_OFFICE_ST',
     locationmode='USA-states',
     color='TTL_DISB',
-    labels={'TTL_DISB': 'Total Disbursements'},
+    color_continuous_scale='Blues',
     scope='usa',
+    labels={'TTL_DISB':'Total Disbursements'},
     title='Total Disbursements by State'
 )
-st.plotly_chart(fig6, use_container_width=True)
+st.plotly_chart(fig4, use_container_width=True)
