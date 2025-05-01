@@ -133,11 +133,21 @@ st.altair_chart(bars,use_container_width=True)
 
 # --- 3. Treemap: Party → Candidate Fundraising ---
 st.header('3. Treemap: Party → Candidate Fundraising')
-party_map = {'DEM':'Democratic','REP':'Republican'}
 df1 = cand_current[cand_current['TTL_RECEIPTS']>0].copy()
-df1['Party'] = df1['CAND_PTY_AFFILIATION'].map(party_map)
-fig1 = px.treemap(df1,path=['Party','CAND_NAME'],values='TTL_RECEIPTS',color='Party',color_discrete_map={'Democratic':'blue','Republican':'red'},title='Fundraising Treemap')
-st.plotly_chart(fig1,use_container_width=True)
+# Map parties and fill missing with 'Other'
+df1['Party'] = df1['CAND_PTY_AFFILIATION'].map(party_map).fillna('Other')
+# Only include known parties or keep 'Other' if desired
+df1 = df1[df1['Party'].notna()]
+fig1 = px.treemap(
+    df1,
+    path=['Party','CAND_NAME'],
+    values='TTL_RECEIPTS',
+    color='Party',
+    color_discrete_map={'Democratic':'blue','Republican':'red','Other':'gray'},
+    title='Fundraising Treemap'
+)
+st.plotly_chart(fig1, use_container_width=True)
+
 
 # --- 4. Radar Chart: Party Receipts by Top States ---
 st.header("4. Radar Chart: Party Receipts by Top States")
