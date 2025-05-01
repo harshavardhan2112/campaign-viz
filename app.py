@@ -53,6 +53,8 @@ def load_candidate_master(path):
 cand_current = load_candidate_summary('weball24.txt')
 cand_old = load_candidate_summary('weball20.txt').rename(columns={'TTL_INDIV_CONTRIB':'DON_OLD'})
 cand_new = load_candidate_summary('weball22.txt').rename(columns={'TTL_INDIV_CONTRIB':'DON_NEW'})
+# Party mapping for treemap
+party_map = {'DEM':'Democratic', 'REP':'Republican'}
 comm_df = load_committee('cm.txt')
 master = load_candidate_master('cn.txt')
 
@@ -133,11 +135,8 @@ st.altair_chart(bars,use_container_width=True)
 
 # --- 3. Treemap: Party → Candidate Fundraising ---
 st.header('3. Treemap: Party → Candidate Fundraising')
-df1 = cand_current[cand_current['TTL_RECEIPTS']>0].copy()
-# Map parties and fill missing with 'Other'
+df1 = cand_current[cand_current['TTL_RECEIPTS'] > 0].copy()
 df1['Party'] = df1['CAND_PTY_AFFILIATION'].map(party_map).fillna('Other')
-# Only include known parties or keep 'Other' if desired
-df1 = df1[df1['Party'].notna()]
 fig1 = px.treemap(
     df1,
     path=['Party','CAND_NAME'],
