@@ -242,55 +242,48 @@ old_tot = cand_old.groupby("CAND_OFFICE_ST")["DON_OLD"].sum().reset_index()
 new_tot = cand_new.groupby("CAND_OFFICE_ST")["DON_NEW"].sum().reset_index()
 change_df = old_tot.merge(new_tot, on="CAND_OFFICE_ST", how="outer").fillna(0)
 change_df['CHANGE'] = change_df['DON_NEW'] - change_df['DON_OLD']
-M = max(abs(change_df['CHANGE'].min()), change_df['CHANGE'].max())
-fig2 = px.choropleth(
-    change_df,
-    locations='CAND_OFFICE_ST',
-    locationmode='USA-states',
-    color='CHANGE',
-    color_continuous_scale='RdBu',
-    range_color=[-M, M],
-    color_continuous_midpoint=0,
-    scope='usa',
-    title='Δ Individual Donations by State',
-    width=800,
-    height=500
-)
-st.plotly_chart(fig2, use_container_width=True)
+# Map to FIPS for Altair
+change_df['id'] = change_df['CAND_OFFICE_ST'].map(state_to_fips)
+chor_change = alt.Chart(us_states).mark_geoshape(
+    stroke='white', strokeWidth=0.5
+).encode(
+    color=alt.Color('CHANGE:Q', title='Δ Individual Donations', scale=alt.Scale(scheme='redblue')),
+    tooltip=[alt.Tooltip('CHANGE:Q', title='Δ Donations')]
+).transform_lookup(
+    lookup='id',
+    from_=alt.LookupData(change_df, 'id', ['CHANGE'])
+).project('albersUsa').properties(width=800, height=400)
+st.altair_chart(chor_change, use_container_width=True)
 
 # --- 6. Choropleth: Net Cash On Hand by State ---
 st.header("6. Choropleth: Net Cash On Hand by State")
 coh_df = cand_current.groupby('CAND_OFFICE_ST').agg({'COH_BOP':'sum','COH_COP':'sum'}).reset_index()
 coh_df['NET_COH'] = coh_df['COH_COP'] - coh_df['COH_BOP']
-fig3 = px.choropleth(
-    coh_df,
-    locations='CAND_OFFICE_ST',
-    locationmode='USA-states',
-    color='NET_COH',
-    color_continuous_scale='Greens',
-    scope='usa',
-    labels={'NET_COH':'Net Cash On Hand'},
-    title='Net Cash On Hand by State',
-    width=800,
-    height=500
-)
-st.plotly_chart(fig3, use_container_width=True)
+# Map to FIPS for Altair
+coh_df['id'] = coh_df['CAND_OFFICE_ST'].map(state_to_fips)
+chor_coh = alt.Chart(us_states).mark_geoshape(
+    stroke='white', strokeWidth=0.5
+).encode(
+    color=alt.Color('NET_COH:Q', title='Net Cash On Hand', scale=alt.Scale(scheme='greens')),
+    tooltip=[alt.Tooltip('NET_COH:Q', title='Net Cash On Hand')]
+).transform_lookup(
+    lookup='id',
+    from_=alt.LookupData(coh_df, 'id', ['NET_COH'])
+).project('albersUsa').properties(width=800, height=400)
+st.altair_chart(chor_coh, use_container_width=True)
 
-# --- 4. Choropleth: Total Disbursements by State ---
-st.header("4. Choropleth: Total Disbursements by State")
+# --- 7. Choropleth: Total Disbursements by State ---
+st.header("7. Choropleth: Total Disbursements by State")
 disburse_df = cand_current.groupby('CAND_OFFICE_ST')['TTL_DISB'].sum().reset_index()
-fig4 = px.choropleth(
-    disburse_df,
-    locations='CAND_OFFICE_ST',
-    locationmode='USA-states',
-    color='TTL_DISB',
-    color_continuous_scale='Blues',
-    scope='usa',
-    labels={'TTL_DISB':'Total Disbursements'},
-    title='Total Disbursements by State',
-    width=800,
-    height=400,
-    template='plotly_white'
-)
-fig4.update_geos(bgcolor='white')
-st.plotly_chart(fig4, use_container_width=True)
+# Map to FIPS for Altair
+disburse_df['id'] = disburse_df['CAND_OFFICE_ST'].map(state_to_fips)
+chor_disb = alt.Chart(us_states).mark_geoshape(
+    stroke='white', strokeWidth=0.5
+).encode(
+    color=alt.Color('TTL_DISB:Q', title='Total Disbursements', scale=alt.Scale(scheme='blues')),
+    tooltip=[alt.Tooltip('TTL_DISB:Q', title='Total Disbursements')]
+).transform_lookup(
+    lookup='id',
+    from_=alt.LookupData(disburse_df, 'id', ['TTL_DISB'])
+).project('albersUsa').properties(width=800, height=400)
+st.altair_chart(chor_disb, use_container_width=True)
