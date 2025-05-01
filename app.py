@@ -287,21 +287,13 @@ st.altair_chart(chor_coh, use_container_width=True)(fig3, use_container_width=Tr
 # --- 7. Choropleth: Total Disbursements by State ---
 st.header("7. Choropleth: Total Receipts by State")
 receipts_df = cand_current.groupby('CAND_OFFICE_ST')['TTL_RECEIPTS'].sum().reset_index()
-# Map to FIPS for Altair
 receipts_df['id'] = receipts_df['CAND_OFFICE_ST'].map(state_to_fips)
-chor_receipts = alt.Chart(us_states).mark_geoshape(
-    stroke='white', strokeWidth=0.5
-).encode(
-    color=alt.Color(
-        'TTL_RECEIPTS:Q', title='Total Receipts',
-        scale=alt.Scale(
-            domain=[receipts_df['TTL_RECEIPTS'].min(), receipts_df['TTL_RECEIPTS'].max()],
-            range=px.colors.sequential.Viridis
-        )
-    ),
+chor_receipts = alt.Chart(us_states).mark_geoshape(stroke='white', strokeWidth=0.5).encode(
+    color=alt.Color('TTL_RECEIPTS:Q', title='Total Receipts',
+                    scale=alt.Scale(domain=[receipts_df['TTL_RECEIPTS'].min(), receipts_df['TTL_RECEIPTS'].max()],
+                                    range=px.colors.sequential.Viridis)),
     tooltip=[alt.Tooltip('TTL_RECEIPTS:Q', title='Total Receipts')]
 ).transform_lookup(
-    lookup='id',
-    from_=alt.LookupData(receipts_df, 'id', ['TTL_RECEIPTS'])
+    lookup='id', from_=alt.LookupData(receipts_df, 'id', ['TTL_RECEIPTS'])
 ).project('albersUsa').properties(width=800, height=400)
 st.altair_chart(chor_receipts, use_container_width=True)
