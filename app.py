@@ -162,44 +162,67 @@ st.plotly_chart(fig1, use_container_width=True)
 
 
 # --- 4. Radar Chart: Party Receipts by Top States ---
-st.header("5. Radar Chart: Party Receipts by Top States")
-party_state = cand_current.groupby(['CAND_OFFICE_ST', 'CAND_PTY_AFFILIATION'])['TTL_RECEIPTS'].sum().reset_index()
-party_state = party_state[party_state['CAND_PTY_AFFILIATION'].isin(['DEM', 'REP'])]
-pivot_rs = party_state.pivot(
-    index='CAND_OFFICE_ST',
-    columns='CAND_PTY_AFFILIATION',
-    values='TTL_RECEIPTS'
-).fillna(0)
-pivot_rs['TOTAL'] = pivot_rs.sum(axis=1)
-top_states = pivot_rs.nlargest(6, 'TOTAL').index.tolist()
-pivot_rs = pivot_rs.loc[top_states]
-states = list(pivot_rs.index) + [top_states[0]]
-dem_vals = list(pivot_rs['DEM']) + [pivot_rs['DEM'].iloc[0]]
-rep_vals = list(pivot_rs['REP']) + [pivot_rs['REP'].iloc[0]]
-fig2 = go.Figure(
-    data=[
-        go.Scatterpolar(
-            r=dem_vals,
-            theta=states,
-            fill='toself',
-            name='Democratic',
-            line_color='blue'
-        ),
-        go.Scatterpolar(
-            r=rep_vals,
-            theta=states,
-            fill='toself',
-            name='Republican',
-            line_color='red'
+# --- Radar Chart: DEM vs REP Financial Profile for a State ---
+st.header("Radar Chart: DEM vs REP Financial Profile (e.g. TX)")
+
+# First, compute state‐party aggregates for your metrics
+metrics = ['TTL_RECEIPTS', 'TTL_DISB', 'COH_BOP', 'COH_COP']
+state_party = (
+    cand_current[cand_current['CAND_OFFICE_ST']=='TX']
+    .groupby('CAND_PTY_AFFILIATION')[metrics]
+    .sum()
+    .reset_index()
+)
+# Compute net cash
+state_party['Net_Cash'] = state_party['COH_COP'] - state_party['COH_BOP']
+
+# Define the categories in the order you want them around the radar
+categories = ['TTL_RECEIPTS','TTL_DISB','COH_BOP','COH_COP','Net_Cash']
+
+# Extract values for each party, closing the loop
+dem = state_party[state_party['CAND_PTY_AFFILIATION']=='DEM']
+rep = state_party[state_party['CAND_PTY_AFFILIATION']=='REP']
+
+dem_vals = dem[categories].iloc[0].tolist()
+rep_vals = rep[categories].iloc[0].tolist()
+# close the loop
+dem_vals += [dem_vals[0]]
+rep_vals += [rep_vals[0]]
+cats_loop = categories + [categories[0]]
+
+# Build the radar
+fig = go.Figure()
+
+fig.add_trace(go.Scatterpolar(
+    r=dem_vals,
+    theta=cats_loop,
+    fill='toself',
+    name='Democrats',
+    line_color='blue',
+))
+fig.add_trace(go.Scatterpolar(
+    r=rep_vals,
+    theta=cats_loop,
+    fill='toself',
+    name='Republicans',
+    line_color='red',
+))
+
+fig.update_layout(
+    polar=dict(
+        radialaxis=dict(
+            visible=True,
+            # adjust max if you need tighter/fixed scale
+            range=[0, max(dem_vals + rep_vals)]  
         )
-    ]
-)
-fig2.update_layout(
-    polar=dict(radialaxis=dict(visible=True)),
+    ),
     showlegend=True,
-    title='Party Receipts by Top States'
+    title="Radar Chart: DEM vs REP Financial Profile in TX"
 )
-st.plotly_chart(fig2, use_container_width=True)
+
+# And render it with Streamlit
+st.plotly_chart(fig, use_container_width=True)
+
 
 # Party mapping for violin
 party_map = {
@@ -261,7 +284,7 @@ chor_change = alt.Chart(us_states).mark_geoshape(
 ).project('albersUsa').properties(width=800, height=400)
 st.altair_chart(chor_change, use_container_width=True)
 
-st.header("3. Choropleth: Net Cash On Hand by State")
+st.header("6. Choropleth: Net Cash On Hand by State")
 coh_df = cand_current.groupby('CAND_OFFICE_ST').agg({'COH_BOP':'sum','COH_COP':'sum'}).reset_index()
 coh_df['NET_COH'] = coh_df['COH_COP'] - coh_df['COH_BOP']
 # Map to FIPS for Altair
