@@ -144,8 +144,7 @@ chor_senate = alt.Chart(us_states).mark_geoshape(stroke='white',strokeWidth=0.5)
 st.altair_chart(chor_senate, use_container_width=True)
 
 
-# --- 3. Treemap: Party → Candidate Fundraising ---
-st.header('4. Treemap: Party → Candidate Fundraising')
+st.header('3. Treemap: Party → Candidate Fundraising')
 df1 = cand_current[cand_current['TTL_RECEIPTS'] > 0].copy()
 df1['Party'] = df1['CAND_PTY_AFFILIATION'].map(party_map).fillna('Other')
 fig1 = px.treemap(
@@ -154,8 +153,11 @@ fig1 = px.treemap(
     values='TTL_RECEIPTS',
     color='Party',
     color_discrete_map={'Democratic':'blue','Republican':'red','Other':'gray'},
-    title='Fundraising Treemap'
+    title='Fundraising Treemap',
+    width=1000,
+    height=600
 )
+fig1.update_layout(margin=dict(t=50, l=25, r=25, b=25))
 st.plotly_chart(fig1, use_container_width=True)
 
 
@@ -246,7 +248,7 @@ fig2 = px.choropleth(
     locations='CAND_OFFICE_ST',
     locationmode='USA-states',
     color='CHANGE',
-    color_continuous_scale='RdBu',
+    color_continuous_scale=px.colors.diverging.RdYlGn,
     range_color=[-M, M],
     color_continuous_midpoint=0,
     scope='usa',
@@ -263,7 +265,7 @@ fig3 = px.choropleth(
     locations='CAND_OFFICE_ST',
     locationmode='USA-states',
     color='NET_COH',
-    color_continuous_scale='Greens',
+    color_continuous_scale='Inferno',
     scope='usa',
     labels={'NET_COH':'Net Cash On Hand'},
     title='Net Cash On Hand by State'
@@ -271,16 +273,16 @@ fig3 = px.choropleth(
 st.plotly_chart(fig3, use_container_width=True)
 
 # --- 4. Choropleth: Total Disbursements by State ---
-st.header("9. Choropleth: Total Disbursements by State")
-disburse_df = cand_current.groupby('CAND_OFFICE_ST')['TTL_DISB'].sum().reset_index()
+st.header("9. Choropleth: Total Receipts by State")
+disburse_df = cand_current.groupby('CAND_OFFICE_ST')['TTL_RECEIPTS'].sum().reset_index()
 fig4 = px.choropleth(
     disburse_df,
     locations='CAND_OFFICE_ST',
     locationmode='USA-states',
-    color='TTL_DISB',
-    color_continuous_scale='Blues',
+    color='TTL_RECEIPTS',
+    color_continuous_scale='Viridis',
     scope='usa',
-    labels={'TTL_DISB':'Total Disbursements'},
-    title='Total Disbursements by State'
+    labels={'TTL_DISB':'Total Receipts'},
+    title='Total Receipts by State'
 )
 st.plotly_chart(fig4, use_container_width=True)
