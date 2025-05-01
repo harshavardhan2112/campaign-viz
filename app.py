@@ -289,6 +289,8 @@ fig4 = px.choropleth(
     labels={'TTL_DISB':'Total Disbursements'},
     title='Total Disbursements by State',
     width=800,
-    height=400
+    height=400,
+    template='plotly_white'
 )
+fig4.update_geos(bgcolor='white')
 st.plotly_chart(fig4, use_container_width=True)
