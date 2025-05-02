@@ -146,34 +146,46 @@ st.altair_chart(chor_senate, use_container_width=True)
 
 st.header('3. Treemap: Party → Candidate Fundraising')
 
-# Filter and prepare DataFrame
-df1 = cand_current[cand_current['TTL_RECEIPTS'] > 0].copy()
-df1['Party'] = df1['CAND_PTY_AFFILIATION'].map(party_map).fillna('Other')
+# Load candidate data
+columns = get_candidate_columns()
+df = pd.read_csv("weball22.txt", sep="|", header=None, names=columns, low_memory=True)
 
-# Optional: Ensure Health_Score exists or compute it
-if 'Health_Score' not in df1.columns:
-    df1['Health_Score'] = df1['COH_COP'] / df1['TTL_RECEIPTS']  # Example score
-    df1['Health_Score'] = df1['Health_Score'].fillna(0)
+# Filter and clean data
+df = df[(df['CAND_NAME'].notna()) & (df['TTL_RECEIPTS'] > 0)].copy()
 
-# Build the treemap
-fig1 = px.treemap(
-    df1,
+# Party mapping
+party_map = {
+    'DEM': 'Democratic', 'DFL': 'Democratic',
+    'REP': 'Republican', 'GOP': 'Republican',
+    'IND': 'Independent',
+    'LIB': 'Libertarian', 'GRE': 'Green',
+    'CON': 'Constitution', 'NPA': 'No Party Affiliation',
+    'OTH': 'Other', 'UUP': 'United Utah Party'
+}
+df['Party'] = df['CAND_PTY_AFFILIATION'].map(party_map).fillna('Other')
+
+# Calculate Health Score
+df['Health_Score'] = ((df['TTL_RECEIPTS'] + df['COH_COP']) - df['TTL_DISB']) / df['TTL_RECEIPTS']
+df['Health_Score'] = df['Health_Score'].replace([np.inf, -np.inf], np.nan).fillna(0)
+
+# Plot treemap
+fig = px.treemap(
+    df,
     path=['Party', 'CAND_NAME'],
     values='TTL_RECEIPTS',
-    color='Health_Score',  # Now using continuous color
+    color='Health_Score',
     hover_data={
         'TTL_RECEIPTS': ':,.0f',
         'COH_COP': ':,.0f',
         'Health_Score': ':.2f'
     },
     color_continuous_scale='Viridis',
-    title='Fundraising Treemap: Colored by Health Score',
+    title="Fundraising Treemap: Colored by Health Score",
     width=1000,
     height=600
 )
 
-# Layout adjustments
-fig1.update_layout(
+fig.update_layout(
     margin=dict(t=50, l=25, r=25, b=25),
     coloraxis_colorbar=dict(
         title="Health Score",
@@ -181,9 +193,7 @@ fig1.update_layout(
     )
 )
 
-# Show in Streamlit
-st.plotly_chart(fig1, use_container_width=True)
-
+st.plotly_chart(fig, use_container_width=True)
 
 # --- 4. Radar Chart: Party Receipts by Top States ---
 # --- Radar Chart: DEM vs REP Financial Profile for a State ---
