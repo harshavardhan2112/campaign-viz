@@ -146,6 +146,20 @@ st.altair_chart(chor_senate, use_container_width=True)
 
 st.header('3. Treemap: Party → Candidate Fundraising')
 
+@st.cache_data
+def get_candidate_columns():
+    return [
+        "CAND_ID", "CAND_NAME", "CAND_ICI", "PTY_CD", "CAND_PTY_AFFILIATION",
+        "TTL_RECEIPTS", "TRANS_FROM_AUTH", "TTL_DISB", "TRANS_TO_AUTH",
+        "COH_BOP", "COH_COP", "CAND_CONTRIB", "CAND_LOANS", "OTHER_LOANS",
+        "CAND_LOAN_REPAY", "OTHER_LOAN_REPAY", "DEBTS_OWED_BY", "TTL_INDIV_CONTRIB",
+        "CAND_OFFICE_ST", "CAND_OFFICE_DISTRICT", "SPEC_ELECTION", "PRIM_ELECTION",
+        "RUN_ELECTION", "GEN_ELECTION", "GEN_ELECTION_PERCENT",
+        "OTHER_POL_CMTE_CONTRIB", "POL_PTY_CONTRIB", "CVG_END_DT",
+        "INDIV_REFUNDS", "CMTE_REFUNDS"
+    ]
+
+
 # Load candidate data
 columns = get_candidate_columns()
 df = pd.read_csv("weball22.txt", sep="|", header=None, names=columns, low_memory=True)
