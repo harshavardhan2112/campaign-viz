@@ -179,7 +179,7 @@ party_map = {
 df['Party'] = df['CAND_PTY_AFFILIATION'].map(party_map).fillna('Other')
 
 # Calculate Health Score
-df['Health_Score'] = ((df['TTL_RECEIPTS'] + df['COH_COP']) - df['TTL_DISB']) / df['TTL_RECEIPTS']
+df['Health_Score'] = ((df['TTL_RECEIPTS'] + df['COH_COP']) - df['TTL_DISB'])
 df['Health_Score'] = df['Health_Score'].replace([np.inf, -np.inf], np.nan).fillna(0)
 
 # Plot treemap
