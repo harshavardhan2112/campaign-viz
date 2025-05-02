@@ -145,19 +145,43 @@ st.altair_chart(chor_senate, use_container_width=True)
 
 
 st.header('3. Treemap: Party → Candidate Fundraising')
+
+# Filter and prepare DataFrame
 df1 = cand_current[cand_current['TTL_RECEIPTS'] > 0].copy()
 df1['Party'] = df1['CAND_PTY_AFFILIATION'].map(party_map).fillna('Other')
+
+# Optional: Ensure Health_Score exists or compute it
+if 'Health_Score' not in df1.columns:
+    df1['Health_Score'] = df1['COH_COP'] / df1['TTL_RECEIPTS']  # Example score
+    df1['Health_Score'] = df1['Health_Score'].fillna(0)
+
+# Build the treemap
 fig1 = px.treemap(
     df1,
-    path=['Party','CAND_NAME'],
+    path=['Party', 'CAND_NAME'],
     values='TTL_RECEIPTS',
-    color='Party',
-    color_discrete_map={'Democratic':'blue','Republican':'red','Other':'gray'},
-    title='Fundraising Treemap',
+    color='Health_Score',  # Now using continuous color
+    hover_data={
+        'TTL_RECEIPTS': ':,.0f',
+        'COH_COP': ':,.0f',
+        'Health_Score': ':.2f'
+    },
+    color_continuous_scale='Viridis',
+    title='Fundraising Treemap: Colored by Health Score',
     width=1000,
     height=600
 )
-fig1.update_layout(margin=dict(t=50, l=25, r=25, b=25))
+
+# Layout adjustments
+fig1.update_layout(
+    margin=dict(t=50, l=25, r=25, b=25),
+    coloraxis_colorbar=dict(
+        title="Health Score",
+        tickformat=",.2f"
+    )
+)
+
+# Show in Streamlit
 st.plotly_chart(fig1, use_container_width=True)
 
 
