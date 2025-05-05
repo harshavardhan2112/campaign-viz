@@ -154,32 +154,28 @@ party_map = {
     'IND': 'Independent',
     'CON': 'Constitution',
     'NPA': 'No Party Affiliation',
-    'OTH': 'Other',
-    'UUP': 'United Utah Party'
+    'OTH': 'Other'
 }
 
-# Violin Plot: Distribution of Fundraising Amounts by Party (Log Scale)
+# --- 1. Violin Plot: Distribution of Fundraising Amounts by Party (Log Scale) --- Distribution of Fundraising Amounts by Party (Log Scale) ---
 st.header("2. Distribution of Fundraising Amounts by Political Party")
-
 violin_df = cand_current[['CAND_PTY_AFFILIATION','TTL_RECEIPTS']].copy()
 violin_df = violin_df[violin_df['TTL_RECEIPTS'] > 0]
 violin_df['Party'] = violin_df['CAND_PTY_AFFILIATION'].map(party_map).fillna('Other')
 violin_df['Log_Receipts'] = np.log1p(violin_df['TTL_RECEIPTS'])
-
 plt.figure(figsize=(14, 8))
 sns.violinplot(
     data=violin_df,
     x='Party',
-    y='Log_Receipts'
+    y='Log_Receipts',
+    palette='muted'
 )
 plt.title('Distribution of Fundraising Amounts by Party (Log Scale)', fontsize=18)
 plt.xlabel('Political Party', fontsize=14)
 plt.ylabel('Log(Total Receipts)', fontsize=14)
 plt.xticks(rotation=45)
 plt.grid(True)
-
 st.pyplot(plt.gcf())
-
 
 
 # --- Section: Donor Category Trends Over Time ---
