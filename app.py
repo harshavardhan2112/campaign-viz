@@ -345,6 +345,18 @@ bars = alt.Chart(t10).mark_bar(stroke='black',strokeWidth=1.5).encode(
 ).properties(width=700,height=400)
 st.altair_chart(bars,use_container_width=True)
 
+st.header("6. Histogram of Individual Donations")
+
+st.image("fig7.png", caption="Geographic distribution of contributions", use_column_width=True)
+
+st.header("7. Small Donation Distribution")
+
+st.image("fig8.png", caption="Geographic distribution of contributions", use_column_width=True)
+
+st.header("8. Top Occupations Driving Political Contributions")
+
+st.image("fig9.png", caption="Geographic distribution of contributions", use_column_width=True)
+
 
 st.header('9. Party-Wise Fundraising and Candidate Financial Strength')
 
