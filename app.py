@@ -408,7 +408,6 @@ fig = px.treemap(
         'Health_Score': ':.0f'
     },
     color_continuous_scale='Viridis',
-    title="Fundraising Treemap: Colored by Health Score",
     width=1000,
     height=600
 )
@@ -478,8 +477,7 @@ fig.update_layout(
             range=[0, max(dem_vals + rep_vals)]  
         )
     ),
-    showlegend=True,
-    title="Radar Chart: DEM vs REP Financial Profile in TX"
+    showlegend=True
 )
 
 # And render it with Streamlit
