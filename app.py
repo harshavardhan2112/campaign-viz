@@ -347,15 +347,15 @@ st.altair_chart(bars,use_container_width=True)
 
 st.header("6. Histogram of Individual Donations")
 
-st.image("fig7.png", caption="Geographic distribution of contributions", use_column_width=True)
+st.image("fig7.png",use_container_width=True)
 
 st.header("7. Small Donation Distribution")
 
-st.image("fig8.png", caption="Geographic distribution of contributions", use_column_width=True)
+st.image("fig8.png",use_container_width=True)
 
 st.header("8. Top Occupations Driving Political Contributions")
 
-st.image("fig9.png", caption="Geographic distribution of contributions", use_column_width=True)
+st.image("fig9.png", use_container_width=True)
 
 
 st.header('9. Party-Wise Fundraising and Candidate Financial Strength')
