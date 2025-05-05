@@ -58,6 +58,90 @@ party_map = {'DEM':'Democratic', 'REP':'Republican'}
 comm_df = load_committee('cm.txt')
 master = load_candidate_master('cn.txt')
 
+alt.data_transformers.disable_max_rows()
+
+# --- Load Data for Contributor Type Visualization ---
+@st.cache_data
+def load_combined_data():
+    cn_master = pd.read_csv("cn_master_combined.csv")
+    weball = pd.read_csv("weball_combined.csv")
+
+    cn_master.drop(columns=['CAND_ST2'], inplace=True, errors='ignore')
+    cn_master = cn_master[cn_master['file_year'] >= 1980]
+
+    weball.rename(columns={'file_year': 'CAND_ELECTION_YR'}, inplace=True)
+    weball.drop(columns=[
+        'SPEC_ELECTION', 'PRIM_ELECTION', 'RUN_ELECTION',
+        'GEN_ELECTION', 'GEN_ELECTION_PRECENT'
+    ], inplace=True, errors='ignore')
+    weball = weball[weball['CAND_ELECTION_YR'] >= 1980]
+
+    return cn_master, weball
+
+cn_master, all_cand = load_combined_data()
+
+st.header("0. Contributions by Party and Contributor Type")
+
+contrib_type_labels = {
+    "CAND_CONTRIB":            "Candidate Contributions",
+    "CAND_LOANS":              "Candidate Loans",
+    "OTHER_LOANS":             "Other Loans",
+    "OTHER_POL_CMTE_CONTRIB":  "Other Committee Contributions",
+    "POL_PTY_CONTRIB":         "Party Committee Contributions"
+}
+contrib_cols = list(contrib_type_labels.keys())
+
+melted = (
+    all_cand
+    .assign(CAND_ELECTION_YR=all_cand["CAND_ELECTION_YR"].astype(int))
+    .melt(
+        id_vars=["CAND_ELECTION_YR", "CAND_PTY_AFFILIATION"],
+        value_vars=contrib_cols,
+        var_name="contrib_type",
+        value_name="amount"
+    )
+    .assign(contrib_label=lambda df: df["contrib_type"].map(contrib_type_labels))
+)
+
+grouped = (
+    melted
+    .groupby(["CAND_ELECTION_YR", "CAND_PTY_AFFILIATION", "contrib_label"], as_index=False)
+    .sum()
+)
+
+min_year = int(grouped["CAND_ELECTION_YR"].min())
+max_year = int(grouped["CAND_ELECTION_YR"].max())
+selected_year = st.slider("Select Election Year", min_value=min_year, max_value=max_year, step=2, value=min_year)
+
+filtered = grouped[grouped["CAND_ELECTION_YR"] == selected_year]
+
+chart = (
+    alt.Chart(filtered)
+    .mark_bar()
+    .encode(
+        x=alt.X("CAND_PTY_AFFILIATION:N", title="Party"),
+        y=alt.Y("amount:Q", title="Total Contribution (USD)"),
+        color=alt.Color(
+            "contrib_label:N",
+            title="Contributor Type",
+            legend=alt.Legend(orient="right", titleFontSize=14, labelFontSize=10, symbolSize=100)
+        ),
+        tooltip=[
+            alt.Tooltip("CAND_PTY_AFFILIATION:N", title="Party"),
+            alt.Tooltip("contrib_label:N", title="Type"),
+            alt.Tooltip("amount:Q", title="Amount", format=",.2f")
+        ]
+    )
+    .properties(
+        width=700,
+        height=400,
+        title=f"Contributions by Party in {selected_year}"
+    )
+    .configure_axis(labelFontSize=14, titleFontSize=16)
+    .configure_title(fontSize=18, anchor="middle")
+)
+
+st.altair_chart(chart, use_container_width=True)
 
 # --- 2. Top 10 PACs by Total Receipts (2022) ---
 st.header('1. Top 10 PACs by Total Receipts (2022)')
