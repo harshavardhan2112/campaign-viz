@@ -80,7 +80,7 @@ def load_combined_data():
 
 cn_master, all_cand = load_combined_data()
 
-st.header("0. Contributions by Party and Contributor Type")
+st.header("1. Contributions Per Party and Donor Type")
 
 contrib_type_labels = {
     "CAND_CONTRIB":            "Candidate Contributions",
@@ -143,8 +143,172 @@ chart = (
 
 st.altair_chart(chart, use_container_width=True)
 
+# --- 1. Violin Plot: Distribution of Fundraising Amounts by Party (Log Scale) --- Distribution of Fundraising Amounts by Party (Log Scale) ---
+st.header("2. Distribution of Fundraising Amounts by Political Party")
+violin_df = cand_current[['CAND_PTY_AFFILIATION','TTL_RECEIPTS']].copy()
+violin_df = violin_df[violin_df['TTL_RECEIPTS'] > 0]
+violin_df['Party'] = violin_df['CAND_PTY_AFFILIATION'].map(party_map).fillna('Other')
+violin_df['Log_Receipts'] = np.log1p(violin_df['TTL_RECEIPTS'])
+plt.figure(figsize=(14, 8))
+sns.violinplot(
+    data=violin_df,
+    x='Party',
+    y='Log_Receipts',
+    palette='muted'
+)
+plt.title('Distribution of Fundraising Amounts by Party (Log Scale)', fontsize=18)
+plt.xlabel('Political Party', fontsize=14)
+plt.ylabel('Log(Total Receipts)', fontsize=14)
+plt.xticks(rotation=45)
+plt.grid(True)
+st.pyplot(plt.gcf())
+
+# Party mapping for violin
+party_map = {
+    'DEM': 'Democratic',
+    'DFL': 'Democratic',
+    'GOP': 'Republican',
+    'REP': 'Republican',
+    'LIB': 'Libertarian',
+    'GRE': 'Green',
+    'IND': 'Independent',
+    'CON': 'Constitution',
+    'NPA': 'No Party Affiliation',
+    'OTH': 'Other',
+    'UUP': 'United Utah Party'
+}
+
+# --- Section: Donor Category Trends Over Time ---
+st.header("3. Contributions over time by different donors")
+
+contrib_type_labels = {
+    "CAND_CONTRIB":            "Candidate Contributions",
+    "CAND_LOANS":              "Candidate Loans",
+    "OTHER_LOANS":             "Other Loans",
+    "OTHER_POL_CMTE_CONTRIB":  "Other Committee Contributions",
+    "POL_PTY_CONTRIB":         "Party Committee Contributions"
+}
+donor_cols = list(contrib_type_labels.keys())
+
+df_long = (
+    all_cand
+    .melt(
+        id_vars=["CAND_ELECTION_YR"],
+        value_vars=donor_cols,
+        var_name="donor_category",
+        value_name="amount"
+    )
+    .assign(
+        donor_label=lambda d: d["donor_category"].map(contrib_type_labels),
+        amount=lambda d: pd.to_numeric(d["amount"], errors="coerce").fillna(0)
+    )
+)
+
+plot_df = (
+    df_long
+    .groupby(["CAND_ELECTION_YR", "donor_label"], as_index=False)
+    .agg(total_amount=("amount", "sum"))
+)
+
+plot_df["CAND_ELECTION_YR"] = plot_df["CAND_ELECTION_YR"].astype(str)
+
+line_chart = (
+    alt.Chart(plot_df)
+    .mark_line(point=True)
+    .encode(
+        x=alt.X("CAND_ELECTION_YR:O", title="Election Year"),
+        y=alt.Y("total_amount:Q", title="Total Contribution (USD)"),
+        color=alt.Color("donor_label:N", title="Donor Category"),
+        tooltip=[
+            alt.Tooltip("CAND_ELECTION_YR:O", title="Election Year"),
+            alt.Tooltip("donor_label:N",       title="Donor Category"),
+            alt.Tooltip("total_amount:Q",      title="Total (USD)", format=",.0f")
+        ]
+    )
+    .properties(width=800, height=450,
+                title="Contributions by Donor Category Over Time")
+    .configure_axis(labelFontSize=14, titleFontSize=16)
+    .configure_title(fontSize=18, anchor="middle")
+)
+
+st.altair_chart(line_chart, use_container_width=True)
+
+# --- Section: Interactive Contribution Category Breakdown ---
+st.header("4. Contributions by Different Donors")
+
+contrib_type_labels = {
+    "CAND_CONTRIB":            "Candidate Contributions",
+    "CAND_LOANS":              "Candidate Loans",
+    "OTHER_LOANS":             "Other Loans",
+    "OTHER_POL_CMTE_CONTRIB":  "Other Committee Contrib",
+    "POL_PTY_CONTRIB":         "Party Committee Contrib"
+}
+donor_cols = list(contrib_type_labels.keys())
+
+df_long = all_cand.melt(
+    id_vars=["CAND_ELECTION_YR"],
+    value_vars=donor_cols,
+    var_name="donor_category",
+    value_name="amount"
+)
+df_long["donor_label"] = df_long["donor_category"].map(contrib_type_labels)
+
+min_year = int(df_long["CAND_ELECTION_YR"].min())
+max_year = int(df_long["CAND_ELECTION_YR"].max())
+
+year_slider = alt.binding_range(
+    min=min_year,
+    max=max_year,
+    step=2,
+    name="Select year: "
+)
+year_param = alt.param(
+    name="YearParam",
+    bind=year_slider,
+    value=min_year
+)
+
+hover = alt.selection_point(
+    fields=["donor_label"],
+    on="mouseover",
+    nearest=True,
+    empty="none"
+)
+
+chart = (
+    alt.Chart(df_long)
+    .add_params(year_param, hover)
+    .transform_filter("datum.CAND_ELECTION_YR === YearParam")
+    .mark_bar()
+    .encode(
+        x=alt.X(
+            "donor_label:N",
+            title="Contributor Category",
+            sort=list(contrib_type_labels.values())
+        ),
+        y=alt.Y("sum(amount):Q", title="Total Contribution (USD)"),
+        color=alt.Color("donor_label:N", title="Contributor Category"),
+        opacity=alt.condition(hover, alt.value(1), alt.value(0.85)),
+        tooltip=[
+            alt.Tooltip("donor_label:N", title="Category"),
+            alt.Tooltip("sum(amount):Q", title="Total (USD)", format=",.0f"),
+            alt.Tooltip("CAND_ELECTION_YR:O", title="Election Year")
+        ]
+    )
+    .properties(
+        width=700,
+        height=450,
+        title="Contributions by Contributor Category"
+    )
+    .configure_axis(labelFontSize=14, titleFontSize=16)
+    .configure_title(fontSize=18, anchor="middle")
+)
+
+st.altair_chart(chart, use_container_width=True)
+
+
 # --- 2. Top 10 PACs by Total Receipts (2022) ---
-st.header('1. Top 10 PACs by Total Receipts (2022)')
+st.header('5. Top 10 PACs')
 pac_cols=[
     "CMTE_ID","CMTE_NM","CMTE_TP","CMTE_DSGN","CMTE_FILING_FREQ",
     "TTL_RECEIPTS","TRANS_FROM_AFF","INDV_CONTRIB","OTHER_POL_CMTE_CONTRIB",
@@ -181,54 +345,7 @@ bars = alt.Chart(t10).mark_bar(stroke='black',strokeWidth=1.5).encode(
 st.altair_chart(bars,use_container_width=True)
 
 
-# --- Topo for Altair maps ---
-us_states = alt.topo_feature(data.us_10m.url, 'states')
-
-# State to FIPS mapping
-state_to_fips = {
-    'AL':1,'AK':2,'AZ':4,'AR':5,'CA':6,'CO':8,'CT':9,'DE':10,'DC':11,
-    'FL':12,'GA':13,'HI':15,'ID':16,'IL':17,'IN':18,'IA':19,'KS':20,
-    'KY':21,'LA':22,'ME':23,'MD':24,'MA':25,'MI':26,'MN':27,'MS':28,
-    'MO':29,'MT':30,'NE':31,'NV':32,'NH':33,'NJ':34,'NM':35,'NY':36,
-    'NC':37,'ND':38,'OH':39,'OK':40,'OR':41,'PA':42,'RI':44,'SC':45,
-    'SD':46,'TN':47,'TX':48,'UT':49,'VT':50,'VA':51,'WA':53,'WV':54,
-    'WI':55,'WY':56
-}
-
-# --- 1. House Race Competitiveness by State ---
-st.header('2. House Race Competitiveness by State (Number of Candidates)')
-house = master[master['CAND_OFFICE']=='H']
-state_comp = house.groupby('CAND_OFFICE_ST').size().reset_index(name='num_candidates')
-# Add district counts and most competitive district if you have data
-state_comp['id'] = state_comp['CAND_OFFICE_ST'].map(state_to_fips)
-chor_house = alt.Chart(us_states).mark_geoshape(
-    stroke='white', strokeWidth=0.5
-).encode(
-    color=alt.Color('num_candidates:Q', title='House Candidates', scale=alt.Scale(scheme='viridis')),
-    tooltip=[
-        alt.Tooltip('num_candidates:Q', title='House Candidates')
-    ]
-).transform_lookup(
-    lookup='id',
-    from_=alt.LookupData(state_comp, 'id', ['num_candidates'])
-).project('albersUsa').properties(width=800, height=400)
-st.altair_chart(chor_house, use_container_width=True)
-
-# --- 1. Senate Race Competitiveness by State ---
-st.header('3. Senate Race Competitiveness by State (Number of Candidates)')
-senate = master[master['CAND_OFFICE']=='S']
-sen_comp = senate.groupby('CAND_OFFICE_ST').size().reset_index(name='num_candidates')
-sen_comp['id'] = sen_comp['CAND_OFFICE_ST'].map(state_to_fips)
-chor_senate = alt.Chart(us_states).mark_geoshape(stroke='white',strokeWidth=0.5).encode(
-    color=alt.Color('num_candidates:Q',title='Senate Candidates',scale=alt.Scale(scheme='viridis')),
-    tooltip=[alt.Tooltip('num_candidates:Q',title='Senate Candidates')]
-).transform_lookup(
-    lookup='id',from_=alt.LookupData(sen_comp,'id',['num_candidates'])
-).project('albersUsa').properties(width=800,height=400)
-st.altair_chart(chor_senate, use_container_width=True)
-
-
-st.header('3. Treemap: Party → Candidate Fundraising')
+st.header('9. Party-Wise Fundraising and Candidate Financial Strength')
 
 @st.cache_data
 def get_candidate_columns():
@@ -295,7 +412,7 @@ st.plotly_chart(fig, use_container_width=True)
 
 # --- 4. Radar Chart: Party Receipts by Top States ---
 # --- Radar Chart: DEM vs REP Financial Profile for a State ---
-st.header("Radar Chart: DEM vs REP Financial Profile (e.g. TX)")
+st.header("10. Comparing Financial Profiles of Democrats vs Republicans")
 
 # First, compute state‐party aggregates for your metrics
 metrics = ['TTL_RECEIPTS', 'TTL_DISB', 'COH_BOP', 'COH_COP']
@@ -355,41 +472,53 @@ fig.update_layout(
 # And render it with Streamlit
 st.plotly_chart(fig, use_container_width=True)
 
+# --- Topo for Altair maps ---
+us_states = alt.topo_feature(data.us_10m.url, 'states')
 
-# Party mapping for violin
-party_map = {
-    'DEM': 'Democratic',
-    'DFL': 'Democratic',
-    'GOP': 'Republican',
-    'REP': 'Republican',
-    'LIB': 'Libertarian',
-    'GRE': 'Green',
-    'IND': 'Independent',
-    'CON': 'Constitution',
-    'NPA': 'No Party Affiliation',
-    'OTH': 'Other',
-    'UUP': 'United Utah Party'
+# State to FIPS mapping
+state_to_fips = {
+    'AL':1,'AK':2,'AZ':4,'AR':5,'CA':6,'CO':8,'CT':9,'DE':10,'DC':11,
+    'FL':12,'GA':13,'HI':15,'ID':16,'IL':17,'IN':18,'IA':19,'KS':20,
+    'KY':21,'LA':22,'ME':23,'MD':24,'MA':25,'MI':26,'MN':27,'MS':28,
+    'MO':29,'MT':30,'NE':31,'NV':32,'NH':33,'NJ':34,'NM':35,'NY':36,
+    'NC':37,'ND':38,'OH':39,'OK':40,'OR':41,'PA':42,'RI':44,'SC':45,
+    'SD':46,'TN':47,'TX':48,'UT':49,'VT':50,'VA':51,'WA':53,'WV':54,
+    'WI':55,'WY':56
 }
 
-# --- 1. Violin Plot: Distribution of Fundraising Amounts by Party (Log Scale) --- Distribution of Fundraising Amounts by Party (Log Scale) ---
-st.header("6. Violin Plot: Distribution of Fundraising Amounts by Party (Log Scale)")
-violin_df = cand_current[['CAND_PTY_AFFILIATION','TTL_RECEIPTS']].copy()
-violin_df = violin_df[violin_df['TTL_RECEIPTS'] > 0]
-violin_df['Party'] = violin_df['CAND_PTY_AFFILIATION'].map(party_map).fillna('Other')
-violin_df['Log_Receipts'] = np.log1p(violin_df['TTL_RECEIPTS'])
-plt.figure(figsize=(14, 8))
-sns.violinplot(
-    data=violin_df,
-    x='Party',
-    y='Log_Receipts',
-    palette='muted'
-)
-plt.title('Distribution of Fundraising Amounts by Party (Log Scale)', fontsize=18)
-plt.xlabel('Political Party', fontsize=14)
-plt.ylabel('Log(Total Receipts)', fontsize=14)
-plt.xticks(rotation=45)
-plt.grid(True)
-st.pyplot(plt.gcf())
+# --- 1. House Race Competitiveness by State ---
+st.header('2. House Race Competitiveness by State (Number of Candidates)')
+house = master[master['CAND_OFFICE']=='H']
+state_comp = house.groupby('CAND_OFFICE_ST').size().reset_index(name='num_candidates')
+# Add district counts and most competitive district if you have data
+state_comp['id'] = state_comp['CAND_OFFICE_ST'].map(state_to_fips)
+chor_house = alt.Chart(us_states).mark_geoshape(
+    stroke='white', strokeWidth=0.5
+).encode(
+    color=alt.Color('num_candidates:Q', title='House Candidates', scale=alt.Scale(scheme='viridis')),
+    tooltip=[
+        alt.Tooltip('num_candidates:Q', title='House Candidates')
+    ]
+).transform_lookup(
+    lookup='id',
+    from_=alt.LookupData(state_comp, 'id', ['num_candidates'])
+).project('albersUsa').properties(width=800, height=400)
+st.altair_chart(chor_house, use_container_width=True)
+
+# --- 1. Senate Race Competitiveness by State ---
+st.header('3. Senate Race Competitiveness by State (Number of Candidates)')
+senate = master[master['CAND_OFFICE']=='S']
+sen_comp = senate.groupby('CAND_OFFICE_ST').size().reset_index(name='num_candidates')
+sen_comp['id'] = sen_comp['CAND_OFFICE_ST'].map(state_to_fips)
+chor_senate = alt.Chart(us_states).mark_geoshape(stroke='white',strokeWidth=0.5).encode(
+    color=alt.Color('num_candidates:Q',title='Senate Candidates',scale=alt.Scale(scheme='viridis')),
+    tooltip=[alt.Tooltip('num_candidates:Q',title='Senate Candidates')]
+).transform_lookup(
+    lookup='id',from_=alt.LookupData(sen_comp,'id',['num_candidates'])
+).project('albersUsa').properties(width=800,height=400)
+st.altair_chart(chor_senate, use_container_width=True)
+
+
 
 # --- 5. Choropleth: Change in Individual Donations by State ---
 st.header("5. Choropleth: Change in Individual Donations by State")
