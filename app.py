@@ -143,6 +143,21 @@ chart = (
 
 st.altair_chart(chart, use_container_width=True)
 
+# Party mapping for violin
+party_map = {
+    'DEM': 'Democratic',
+    'DFL': 'Democratic',
+    'GOP': 'Republican',
+    'REP': 'Republican',
+    'LIB': 'Libertarian',
+    'GRE': 'Green',
+    'IND': 'Independent',
+    'CON': 'Constitution',
+    'NPA': 'No Party Affiliation',
+    'OTH': 'Other',
+    'UUP': 'United Utah Party'
+}
+
 # --- 1. Violin Plot: Distribution of Fundraising Amounts by Party (Log Scale) --- Distribution of Fundraising Amounts by Party (Log Scale) ---
 st.header("2. Distribution of Fundraising Amounts by Political Party")
 violin_df = cand_current[['CAND_PTY_AFFILIATION','TTL_RECEIPTS']].copy()
@@ -163,20 +178,6 @@ plt.xticks(rotation=45)
 plt.grid(True)
 st.pyplot(plt.gcf())
 
-# Party mapping for violin
-party_map = {
-    'DEM': 'Democratic',
-    'DFL': 'Democratic',
-    'GOP': 'Republican',
-    'REP': 'Republican',
-    'LIB': 'Libertarian',
-    'GRE': 'Green',
-    'IND': 'Independent',
-    'CON': 'Constitution',
-    'NPA': 'No Party Affiliation',
-    'OTH': 'Other',
-    'UUP': 'United Utah Party'
-}
 
 # --- Section: Donor Category Trends Over Time ---
 st.header("3. Contributions over time by different donors")
@@ -487,7 +488,7 @@ state_to_fips = {
 }
 
 # --- 1. House Race Competitiveness by State ---
-st.header('2. House Race Competitiveness by State (Number of Candidates)')
+st.header('11. House Race Competitiveness')
 house = master[master['CAND_OFFICE']=='H']
 state_comp = house.groupby('CAND_OFFICE_ST').size().reset_index(name='num_candidates')
 # Add district counts and most competitive district if you have data
@@ -506,7 +507,7 @@ chor_house = alt.Chart(us_states).mark_geoshape(
 st.altair_chart(chor_house, use_container_width=True)
 
 # --- 1. Senate Race Competitiveness by State ---
-st.header('3. Senate Race Competitiveness by State (Number of Candidates)')
+st.header('12. Senate Race Competitiveness')
 senate = master[master['CAND_OFFICE']=='S']
 sen_comp = senate.groupby('CAND_OFFICE_ST').size().reset_index(name='num_candidates')
 sen_comp['id'] = sen_comp['CAND_OFFICE_ST'].map(state_to_fips)
@@ -521,7 +522,7 @@ st.altair_chart(chor_senate, use_container_width=True)
 
 
 # --- 5. Choropleth: Change in Individual Donations by State ---
-st.header("5. Choropleth: Change in Individual Donations by State")
+st.header("13. State-Level Shifts in Individual Donations")
 old_tot = cand_old.groupby("CAND_OFFICE_ST")["DON_OLD"].sum().reset_index()
 new_tot = cand_new.groupby("CAND_OFFICE_ST")["DON_NEW"].sum().reset_index()
 change_df = old_tot.merge(new_tot, on="CAND_OFFICE_ST", how="outer").fillna(0)
@@ -545,7 +546,7 @@ chor_change = alt.Chart(us_states).mark_geoshape(
 ).project('albersUsa').properties(width=800, height=400)
 st.altair_chart(chor_change, use_container_width=True)
 
-st.header("6. Choropleth: Net Cash On Hand by State")
+st.header("14. Net Cash Reserves of Candidates by State")
 coh_df = cand_current.groupby('CAND_OFFICE_ST').agg({'COH_BOP':'sum','COH_COP':'sum'}).reset_index()
 coh_df['NET_COH'] = coh_df['COH_COP'] - coh_df['COH_BOP']
 # Map to FIPS for Altair
@@ -569,7 +570,7 @@ st.altair_chart(chor_coh, use_container_width=True)
 
 
 # --- 7. Choropleth: Total Disbursements by State ---
-st.header("7. Choropleth: Total Receipts by State")
+st.header("15. Total Fundraising Amounts by State")
 receipts_df = cand_current.groupby('CAND_OFFICE_ST')['TTL_RECEIPTS'].sum().reset_index()
 receipts_df['id'] = receipts_df['CAND_OFFICE_ST'].map(state_to_fips)
 chor_receipts = alt.Chart(us_states).mark_geoshape(stroke='white', strokeWidth=0.5).encode(
