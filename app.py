@@ -144,10 +144,16 @@ chart = (
 st.altair_chart(chart, use_container_width=True)
 
 st.markdown("""
-**Stacked Bar Chart:** Showing contributions for each party per year, with contributions stacked by donor category.  
-**Key Takeaway:** Democrats and Republicans dominated the rest of the parties financially.  
-**Design Note:** Hover-over tooltips increase interactivity without cluttering the view.
+**Stacked Bar Chart:**  
+Showing contributions for each party per year, with contributions stacked by donor category.  
+
+**Key Takeaway:**  
+Democrats and Republicans dominated the rest of the parties financially.  
+
+**Design Note:**  
+Hover-over tooltips increase interactivity without cluttering the view.
 """)
+
 
 
 # Party mapping for violin
