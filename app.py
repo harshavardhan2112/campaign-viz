@@ -417,7 +417,7 @@ Density Plot: Kernel Density Estimate (KDE) focusing on donations under $100, pl
 
 Key Takeaways:
 - A visible peak occurs around $25 for both parties, with a consistent decline as donation size increases.
-- A noticeable drop around 75 suggests psychological donation thresholds at common values like 5, 10, 25, 50, and 100.
+- A noticeable drop around "$75" suggests psychological donation thresholds at common values like 5, 10, 25, 50, and 100.
 
 Design Note: KDE was chosen instead of a histogram to provide a smoother view of overall distribution trends.
 """)
