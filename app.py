@@ -185,9 +185,13 @@ plt.grid(True)
 st.pyplot(plt.gcf())
 
 st.markdown("""
-**Violin Plot:** showing distribution of funding by party.
-**Key Takeaway:** Both Democrats and Republicans had higher mean campaign contribution amounts than other parties with constitution party being the lowest.
-**Design Notes:** Log scale used to manage extreme fundraising outliers. Violin plot shape emphasizes spread, median, and distribution thickness.
+**Violin Plot:** Showing distribution of funding by party.  
+
+**Key Takeaway:**  
+Both Democrats and Republicans had higher mean campaign contribution amounts than other parties, with the Constitution Party being the lowest.  
+
+**Design Notes:**  
+Log scale used to manage extreme fundraising outliers. Violin plot shape emphasizes spread, median, and distribution thickness.
 """)
 
 
@@ -247,10 +251,15 @@ line_chart = (
 st.altair_chart(line_chart, use_container_width=True)
 
 st.markdown("""
-**Line Chart:**  showing contributions by each donor type over time.
-**Key takeaway:** In 2020, there is an anomaly showing problems with the data for that year. Election costs have been steadily growing each year.
-**Design note:** colour schemes kept consistent with previous graph, picked colors to align with colorblind accessibility.
+**Line Chart:** Showing contributions by each donor type over time.  
+
+**Key Takeaway:**  
+In 2020, there is an anomaly showing problems with the data for that year. Election costs have been steadily growing each year.  
+
+**Design Note:**  
+Colour schemes were kept consistent with the previous graph, with colors chosen to support colorblind accessibility.
 """)
+
 
 
 # --- Section: Interactive Contribution Category Breakdown ---
