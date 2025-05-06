@@ -397,15 +397,16 @@ st.header("7. Small Donation Distribution")
 
 st.image("fig8.png",use_container_width=True)
 
-st.markdown("""
-**Density Plot:** Kernel Density Estimate (KDE) focusing on donations under $100, plotted on a linear scale for clearer interpretation of small-value contributions.  
+st.write("""
+Density Plot: Kernel Density Estimate (KDE) focusing on donations under $100, plotted on a linear scale for clearer interpretation of small-value contributions.
 
-**Key Takeaways:**  
-- A visible peak occurs around $25 for both parties, with a consistent decline as donation size increases.  
+Key Takeaways:
+- A visible peak occurs around $25 for both parties, with a consistent decline as donation size increases.
 - A noticeable drop around $75 suggests psychological donation thresholds at common values like $5, $10, $25, $50, and $100.
 
-**Design Note:** KDE was chosen instead of a histogram to provide a smoother view of overall distribution trends.
+Design Note: KDE was chosen instead of a histogram to provide a smoother view of overall distribution trends.
 """)
+
 
 
 
