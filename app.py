@@ -143,6 +143,13 @@ chart = (
 
 st.altair_chart(chart, use_container_width=True)
 
+st.markdown("""
+**Stacked Bar Chart:** Showing contributions for each party per year, with contributions stacked by donor category.  
+**Key Takeaway:** Democrats and Republicans dominated the rest of the parties financially.  
+**Design Note:** Hover-over tooltips increase interactivity without cluttering the view.
+""")
+
+
 # Party mapping for violin
 party_map = {
     'DEM': 'Democratic',
@@ -176,6 +183,12 @@ plt.ylabel('Log(Total Receipts)', fontsize=14)
 plt.xticks(rotation=45)
 plt.grid(True)
 st.pyplot(plt.gcf())
+
+st.markdown("""
+**Violin Plot:** showing distribution of funding by party 
+**Key Takeaway:** Both Democrats and Republicans had higher mean campaign contribution amounts than other parties with constitution party being the lowest
+**Design Notes:** Log scale used to manage extreme fundraising outliers. Violin plot shape emphasizes spread, median, and distribution thickness
+""")
 
 
 # --- Section: Donor Category Trends Over Time ---
@@ -232,6 +245,13 @@ line_chart = (
 )
 
 st.altair_chart(line_chart, use_container_width=True)
+
+st.markdown("""
+**Line Chart:**  showing contributions by each donor type over time
+**Key takeaway:** In 2020, there is an anomaly showing problems with the data for that year. Election costs have been steadily growing each year
+**Design note:** colour schemes kept consistent with previous graph, picked colors to align with colorblind accessibility 
+""")
+
 
 # --- Section: Interactive Contribution Category Breakdown ---
 st.header("4. Contributions by Different Donors")
@@ -306,6 +326,17 @@ chart = (
 
 st.altair_chart(chart, use_container_width=True)
 
+st.markdown("""
+**Bar Chart:** Displays contributions by each donor category for a selected year using a year slider.  
+**Key Takeaways:**  
+- In **1984**, most campaign finances came from **loans**, marking a unique pattern not seen in other years.  
+- In **2022**, the dominant sources were **candidate loans**, **candidate contributions**, and **action committee contributions**.  
+
+**Design Note:**  
+A **year slider** has been included below the chart to allow interactive exploration of contribution patterns across different election years without overwhelming the viewer.
+""")
+
+
 
 # --- 2. Top 10 PACs by Total Receipts (2022) ---
 st.header('5. Top 10 PACs')
@@ -344,17 +375,47 @@ bars = alt.Chart(t10).mark_bar(stroke='black',strokeWidth=1.5).encode(
 ).properties(width=700,height=400)
 st.altair_chart(bars,use_container_width=True)
 
+st.markdown("""
+**Bar Chart:** Top 10 Political Action Committees (PACs) by total receipts.  
+**Key Takeaway:** Democratic fundraising appears to be more **PAC-driven**, especially at smaller contribution levels.  
+**Design Note:** **Dashed outlines** were used for Republican PACs to ensure accessibility in **black-and-white printing**.
+""")
+
+
 st.header("6. Histogram of Individual Donations")
 
 st.image("fig7.png",use_container_width=True)
+
+st.markdown("""
+**Bar Chart:** Histogram of individual donations, plotted on a log-log scale to capture the wide variance in contribution amounts.  
+**Key Takeaway:** Most donations are less than $5,000 for both parties, but Republicans show a higher concentration of large donors.  
+**Design Note:** Log-log scaling was used to compress the wide data range while still revealing underlying distribution trends.
+""")
+
 
 st.header("7. Small Donation Distribution")
 
 st.image("fig8.png",use_container_width=True)
 
+st.markdown("""
+**Density Plot:** Kernel Density Estimate (KDE) focusing on donations under $100, plotted on a linear scale for clearer interpretation of small-value contributions.  
+**Key Takeaways:**  
+- A visible peak occurs around $25 for both parties, with a consistent decline as donation size increases.  
+- Noticeable drop around $75 suggests psychological donation thresholds at common values like $5, $10, $25, $50, and $100.  
+**Design Note:** KDE was chosen instead of a histogram to provide a smoother view of the overall distribution trend.
+""")
+
+
 st.header("8. Top Occupations Driving Political Contributions")
 
 st.image("fig9.png", use_container_width=True)
+
+st.markdown("""
+**Bar Chart:** Displays the top occupations contributing to political campaigns.  
+**Key Takeaway:** Retired individuals and unemployed donors contribute the most overall, followed by CEOs and attorneys. Republicans generally lead in high-value occupation categories.  
+**Design Note:** Bars are color-coded to distinguish between political parties and contribution sources clearly.
+""")
+
 
 
 st.header('9. Party-Wise Fundraising and Candidate Financial Strength')
@@ -421,6 +482,13 @@ fig.update_layout(
 
 st.plotly_chart(fig, use_container_width=True)
 
+st.markdown("""
+**Treemap:** Visualizes fundraising totals and financial strength by candidate, grouped by party.  
+**Key Takeaway:** Financial health varies significantly among candidates within each party. Larger blocks represent higher fundraising totals, while darker colors indicate stronger cash-on-hand performance.  
+**Design Note:** The nested structure first separates by party, then by candidate. The *Viridis* colormap was selected for its clarity and accessibility.
+""")
+
+
 # --- 4. Radar Chart: Party Receipts by Top States ---
 # --- Radar Chart: DEM vs REP Financial Profile for a State ---
 st.header("10. Comparing Financial Profiles of Democrats vs Republicans")
@@ -482,6 +550,16 @@ fig.update_layout(
 # And render it with Streamlit
 st.plotly_chart(fig, use_container_width=True)
 
+st.markdown("""
+**Radar Chart:** Displays the financial profile of each major political party across key metrics such as starting cash, donations, spending, and ending cash.  
+**Key Takeaways:**  
+- Democrats started with less cash but received more donations.  
+- Despite lower initial funds, they ended the cycle with stronger cash reserves.  
+- Republicans spent a larger portion of their funds and ended with less than they began with.  
+**Design Note:** A simple two-party radar plot was used to emphasize contrasts in financial behavior, allowing for clear visual comparison across all metrics.
+""")
+
+
 # --- Topo for Altair maps ---
 us_states = alt.topo_feature(data.us_10m.url, 'states')
 
@@ -515,6 +593,15 @@ chor_house = alt.Chart(us_states).mark_geoshape(
 ).project('albersUsa').properties(width=800, height=400)
 st.altair_chart(chor_house, use_container_width=True)
 
+st.markdown("""
+**Choropleth Map:** Shows the competitiveness of U.S. House races by visualizing the number of candidates per state.  
+**Key Takeaways:**  
+- States with higher populations tend to have more candidates overall.  
+- Battleground states such as **Georgia**, **Florida**, **Ohio**, **Pennsylvania**, and **Wisconsin** attract a significantly higher number of challengers.  
+**Design Note:** A choropleth map was used to maximize geographic clarity, and the *Viridis* colormap was selected to reduce artifacting and maintain visual consistency.
+""")
+
+
 # --- 1. Senate Race Competitiveness by State ---
 st.header('12. Senate Race Competitiveness')
 senate = master[master['CAND_OFFICE']=='S']
@@ -527,6 +614,15 @@ chor_senate = alt.Chart(us_states).mark_geoshape(stroke='white',strokeWidth=0.5)
     lookup='id',from_=alt.LookupData(sen_comp,'id',['num_candidates'])
 ).project('albersUsa').properties(width=800,height=400)
 st.altair_chart(chor_senate, use_container_width=True)
+
+st.markdown("""
+**Choropleth Map:** Visualizes the competitiveness of Senate races by state based on the number of candidates.  
+**Key Takeaway:**  
+- Swing states appear prominently once again, but even traditionally “safe” states show surprising levels of competition.  
+- Senate races overall exhibit **greater competitiveness** than House races.  
+**Design Note:** The map uses the same visual style as the House race choropleth to enable easy side-by-side comparison.
+""")
+
 
 
 
@@ -555,6 +651,14 @@ chor_change = alt.Chart(us_states).mark_geoshape(
 ).project('albersUsa').properties(width=800, height=400)
 st.altair_chart(chor_change, use_container_width=True)
 
+st.markdown("""
+**Choropleth Map:** Shows the change in individual political contributions at the state level between election cycles.  
+**Key Takeaway:**  
+Key battleground states such as **Florida (FL)**, **Georgia (GA)**, and **Pennsylvania (PA)** experienced significant increases in individual donations, indicating rising political engagement in these regions.  
+**Design Note:** A **diverging color scale** from green (increases) to red (decreases) draws immediate attention to states with the most notable shifts, highlighting regional trends in donor behavior.
+""")
+
+
 st.header("14. Net Cash Reserves of Candidates by State")
 coh_df = cand_current.groupby('CAND_OFFICE_ST').agg({'COH_BOP':'sum','COH_COP':'sum'}).reset_index()
 coh_df['NET_COH'] = coh_df['COH_COP'] - coh_df['COH_BOP']
@@ -577,6 +681,16 @@ chor_coh = alt.Chart(us_states).mark_geoshape(
 ).project('albersUsa').properties(width=800, height=400)
 st.altair_chart(chor_coh, use_container_width=True)
 
+st.markdown("""
+**Choropleth Map:** Visualizes the net cash reserves of all political candidates, aggregated by state.  
+**Key Takeaway:**  
+Most states maintained **net cash balances close to zero**, with notable outliers in **California (CA)**, **South Carolina (SC)**, and **New York (NY)**.  
+Interestingly, **CA and NY**, despite their demographic similarities, exhibited **opposing financial profiles** in terms of candidate cash health.  
+**Design Note:** A **dark-to-light shading** scheme was used to indicate relative financial strength across states.
+""")
+
+
+
 
 # --- 7. Choropleth: Total Disbursements by State ---
 st.header("15. Total Fundraising Amounts by State")
@@ -591,3 +705,10 @@ chor_receipts = alt.Chart(us_states).mark_geoshape(stroke='white', strokeWidth=0
     lookup='id', from_=alt.LookupData(receipts_df, 'id', ['TTL_RECEIPTS'])
 ).project('albersUsa').properties(width=800, height=400)
 st.altair_chart(chor_receipts, use_container_width=True)
+
+st.markdown("""
+**Choropleth Map:** Depicts the total amount of political fundraising by state.  
+**Key Takeaway:**  
+**California**, **Texas**, and **Florida** once again lead the nation in total political contributions, while smaller states raise significantly less overall.  
+**Design Note:** A **sequential color scale** using the *Viridis* colormap highlights the magnitude of total receipts without applying normalization, emphasizing absolute fundraising strength.
+""")
