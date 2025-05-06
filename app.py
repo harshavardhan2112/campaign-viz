@@ -555,7 +555,8 @@ st.markdown("""
 **Key Takeaways:**  
 - Democrats started with less cash but received more donations.  
 - Despite lower initial funds, they ended the cycle with stronger cash reserves.  
-- Republicans spent a larger portion of their funds and ended with less than they began with.  
+- Republicans spent a larger portion of their funds and ended with less than they began with.
+            
 **Design Note:** A simple two-party radar plot was used to emphasize contrasts in financial behavior, allowing for clear visual comparison across all metrics.
 """)
 
@@ -598,6 +599,7 @@ st.markdown("""
 **Key Takeaways:**  
 - States with higher populations tend to have more candidates overall.  
 - Battleground states such as **Georgia**, **Florida**, **Ohio**, **Pennsylvania**, and **Wisconsin** attract a significantly higher number of challengers.  
+            
 **Design Note:** A choropleth map was used to maximize geographic clarity, and the *Viridis* colormap was selected to reduce artifacting and maintain visual consistency.
 """)
 
@@ -619,7 +621,8 @@ st.markdown("""
 **Choropleth Map:** Visualizes the competitiveness of Senate races by state based on the number of candidates.  
 **Key Takeaway:**  
 - Swing states appear prominently once again, but even traditionally “safe” states show surprising levels of competition.  
-- Senate races overall exhibit **greater competitiveness** than House races.  
+- Senate races overall exhibit **greater competitiveness** than House races.
+            
 **Design Note:** The map uses the same visual style as the House race choropleth to enable easy side-by-side comparison.
 """)
 
